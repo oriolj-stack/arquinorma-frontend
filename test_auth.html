@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Authentication</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div id="status">Loading...</div>
+    <div id="session-info"></div>
+    
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://your-project.supabase.co'; // Replace with your actual URL
+        const supabaseKey = 'your-anon-key'; // Replace with your actual key
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function testAuth() {
+            const statusDiv = document.getElementById('status');
+            const sessionDiv = document.getElementById('session-info');
+            
+            try {
+                // Get current session
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                    return;
+                }
+                
+                if (session) {
+                    statusDiv.innerHTML = '<p style="color: green;">✅ User is authenticated</p>';
+                    sessionDiv.innerHTML = `
+                        <h3>Session Info:</h3>
+                        <p><strong>User ID:</strong> ${session.user.id}</p>
+                        <p><strong>Access Token:</strong> ${session.access_token ? 'Present' : 'Missing'}</p>
+                        <p><strong>Token Length:</strong> ${session.access_token ? session.access_token.length : 0}</p>
+                    `;
+                } else {
+                    statusDiv.innerHTML = '<p style="color: orange;">⚠️ No active session - user needs to log in</p>';
+                }
+                
+            } catch (err) {
+                statusDiv.innerHTML = `<p style="color: red;">Exception: ${err.message}</p>`;
+            }
+        }
+        
+        // Run test when page loads
+        testAuth();
+    </script>
+</body>
+</html>
+
+
+

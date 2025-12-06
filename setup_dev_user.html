@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Development User</title>
+</head>
+<body>
+    <h1>Setup Development User</h1>
+    <p>This will set up a development user for testing the admin interface.</p>
+    
+    <button onclick="setupDevUser()">Setup Development User</button>
+    <button onclick="clearDevUser()">Clear Development User</button>
+    
+    <div id="status"></div>
+    
+    <script>
+        function setupDevUser() {
+            const devUser = {
+                id: 'dev_staff_1',
+                email: 'staff@arquinorma.dev',
+                role: 'staff',
+                full_name: 'Staff User'
+            };
+            
+            localStorage.setItem('dev_staff_user', JSON.stringify(devUser));
+            document.getElementById('status').innerHTML = '<p style="color: green;">Development user set up successfully!</p>';
+        }
+        
+        function clearDevUser() {
+            localStorage.removeItem('dev_staff_user');
+            document.getElementById('status').innerHTML = '<p style="color: orange;">Development user cleared.</p>';
+        }
+        
+        // Check current status
+        const currentUser = localStorage.getItem('dev_staff_user');
+        if (currentUser) {
+            document.getElementById('status').innerHTML = '<p style="color: blue;">Development user is already set up: ' + currentUser + '</p>';
+        } else {
+            document.getElementById('status').innerHTML = '<p style="color: gray;">No development user set up.</p>';
+        }
+    </script>
+</body>
+</html>

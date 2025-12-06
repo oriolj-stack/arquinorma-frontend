@@ -1,0 +1,259 @@
+{
+  "common": {
+    "loading": "Carregant...",
+    "saving": "Desant...",
+    "save": "Desar",
+    "cancel": "Cancel·lar",
+    "back": "Tornar",
+    "close": "Tancar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "success": "Èxit",
+    "error": "Error",
+    "warning": "Avís",
+    "info": "Informació",
+    "required": "Obligatori",
+    "optional": "Opcional",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "navigation": {
+    "account": "Compte",
+    "chat": "Xat CTE",
+    "upgrade": "Actualitzar",
+    "logout": "Tancar sessió",
+    "backToChat": "Tornar al xat"
+  },
+  "userAccount": {
+    "title": "Configuració del compte",
+    "welcome": "Benvingut de nou, {{name}}",
+    "tabs": {
+      "personalInfo": "Informació personal",
+      "subscription": "Subscripció",
+      "billing": "Facturació"
+    }
+  },
+  "personalInfo": {
+    "title": "Informació personal",
+    "description": "Gestiona els teus detalls personals i preferències del compte",
+    "profileDetails": {
+      "title": "Detalls del perfil",
+      "fullName": {
+        "label": "Nom complet",
+        "placeholder": "Introdueix el teu nom complet",
+        "help": "Aquest nom es mostrarà al teu perfil.",
+        "validation": {
+          "minLength": "El nom ha de tenir almenys 2 caràcters",
+          "maxLength": "El nom ha de tenir menys de 100 caràcters"
+        }
+      },
+      "email": {
+        "label": "Adreça de correu electrònic",
+        "placeholder": "Introdueix la teva adreça de correu electrònic",
+        "help": "La teva adreça de correu electrònic per a notificacions del compte.",
+        "validation": {
+          "invalid": "Si us plau, introdueix una adreça de correu electrònic vàlida"
+        }
+      },
+      "company": {
+        "label": "Empresa (Opcional)",
+        "placeholder": "Introdueix el nom de la teva empresa",
+        "help": "Nom opcional de l'empresa o organització.",
+        "validation": {
+          "maxLength": "El nom de l'empresa ha de tenir menys de 200 caràcters"
+        }
+      }
+    },
+    "passwordChange": {
+      "title": "Canviar contrasenya",
+      "currentPassword": {
+        "label": "Contrasenya actual",
+        "placeholder": "Introdueix la contrasenya actual",
+        "validation": {
+          "required": "La contrasenya actual és obligatòria"
+        }
+      },
+      "newPassword": {
+        "label": "Nova contrasenya",
+        "placeholder": "Introdueix la nova contrasenya",
+        "validation": {
+          "required": "La nova contrasenya és obligatòria",
+          "minLength": "La contrasenya ha de tenir almenys 8 caràcters",
+          "uppercase": "La contrasenya ha de contenir almenys una lletra majúscula",
+          "lowercase": "La contrasenya ha de contenir almenys una lletra minúscula",
+          "number": "La contrasenya ha de contenir almenys un número",
+          "special": "La contrasenya ha de contenir almenys un caràcter especial"
+        }
+      },
+      "confirmPassword": {
+        "label": "Confirma la nova contrasenya",
+        "placeholder": "Confirma la nova contrasenya",
+        "validation": {
+          "mismatch": "Les contrasenyes no coincideixen"
+        }
+      },
+      "requirements": {
+        "title": "Requisits de la contrasenya:",
+        "items": [
+          "Almenys 8 caràcters de longitud",
+          "Conté almenys una lletra majúscula",
+          "Conté almenys una lletra minúscula",
+          "Conté almenys un número",
+          "Conté almenys un caràcter especial"
+        ]
+      }
+    },
+    "actions": {
+      "saveChanges": "Desar canvis",
+      "changePassword": "Canviar contrasenya",
+      "helpText": "Els canvis es desen automàticament quan cliques \"Desar canvis\""
+    },
+    "messages": {
+      "profileUpdated": "Perfil actualitzat correctament!",
+      "passwordChanged": "Contrasenya canviada correctament!",
+      "updateFailed": "Error al actualitzar el perfil",
+      "passwordChangeFailed": "Error al canviar la contrasenya"
+    }
+  },
+  "subscription": {
+    "title": "Subscripció",
+    "description": "Gestiona la teva subscripció d'ArquiNorma i detalls del pla",
+    "loading": "Carregant informació de subscripció...",
+    "status": {
+      "active": "Actiu",
+      "canceled": "Cancel·lat",
+      "past_due": "Pagament pendent",
+      "unpaid": "No pagat"
+    },
+    "plan": {
+      "free": "Pla gratuït",
+      "personal": "Pla personal",
+      "corporate": "Pla corporatiu",
+      "unknown": "Pla desconegut"
+    },
+    "currentPlan": {
+      "title": "Estat de la subscripció",
+      "free": {
+        "name": "Pla gratuït d'ArquiNorma",
+        "description": "Accés a funcions bàsiques i processament limitat de documents",
+        "price": "Gratuït",
+        "period": "Per sempre"
+      },
+      "renewal": "Renovació",
+      "status": "Estat"
+    },
+    "plans": {
+      "free": {
+        "name": "Pla gratuït",
+        "features": [
+          "Fins a 5 documents PDF",
+          "Funcionalitat bàsica de xat",
+          "Suport de la comunitat"
+        ]
+      },
+      "personal": {
+        "name": "Pla personal",
+        "price": "€19.99",
+        "period": "mes",
+        "recommended": "Recomanat",
+        "features": [
+          "Fins a 50 documents PDF",
+          "Funcions avançades de xat",
+          "Suport per correu electrònic"
+        ],
+        "button": "Actualitzar a personal",
+        "current": "Pla actual"
+      },
+      "corporate": {
+        "name": "Pla corporatiu",
+        "price": "€49.99",
+        "period": "mes",
+        "features": [
+          "Documents il·limitats",
+          "Col·laboració en equip",
+          "Suport prioritari"
+        ],
+        "button": "Actualitzar a corporatiu",
+        "current": "Pla actual"
+      }
+    },
+    "management": {
+      "title": "Gestionar subscripció",
+      "description": "Cancel·la la teva subscripció actual",
+      "cancelButton": "Cancel·lar subscripció",
+      "cancelSuccess": "Subscripció cancel·lada correctament",
+      "cancelError": "Error al cancel·lar la subscripció",
+      "noActiveSubscription": "No hi ha cap subscripció activa per cancel·lar"
+    },
+    "checkout": {
+      "error": "Error al crear la sessió de pagament"
+    },
+    "support": {
+      "title": "Necessites ajuda per triar un pla?",
+      "description": "Contacta amb el nostre equip de suport per a recomanacions personalitzades.",
+      "button": "Contactar suport"
+    }
+  },
+  "billing": {
+    "title": "Facturació i pagaments",
+    "description": "Gestiona els teus mètodes de pagament i visualitza l'historial de facturació",
+    "paymentMethod": {
+      "title": "Mètode de pagament",
+      "update": "Actualitzar",
+      "add": "Afegir mètode de pagament",
+      "card": {
+        "expires": "Caduca {{month}}/{{year}}"
+      }
+    },
+    "billingHistory": {
+      "title": "Historial de facturació",
+      "table": {
+        "date": "Data",
+        "description": "Descripció",
+        "amount": "Import",
+        "status": "Estat",
+        "actions": "Accions",
+        "download": "Descarregar"
+      },
+      "status": {
+        "paid": "Pagat",
+        "pending": "Pendent",
+        "failed": "Fallit"
+      }
+    },
+    "billingInformation": {
+      "title": "Informació de facturació",
+      "companyName": {
+        "label": "Nom de l'empresa (Opcional)",
+        "placeholder": "Introdueix el nom de l'empresa"
+      },
+      "vatNumber": {
+        "label": "Número de IVA (Opcional)",
+        "placeholder": "Introdueix el número de IVA"
+      },
+      "billingAddress": {
+        "label": "Adreça de facturació",
+        "placeholder": "Introdueix la teva adreça de facturació"
+      },
+      "saveButton": "Desar informació de facturació"
+    }
+  },
+  "errors": {
+    "networkError": "Error de xarxa. Si us plau, comprova la teva connexió i torna-ho a intentar.",
+    "serverError": "Error del servidor. Si us plau, torna-ho a intentar més tard.",
+    "validationError": "Error de validació. Si us plau, revisa els camps i torna-ho a intentar.",
+    "unauthorized": "No autoritzat. Si us plau, inicia sessió de nou.",
+    "forbidden": "Accés denegat. No tens permisos per realitzar aquesta acció.",
+    "notFound": "Recurs no trobat.",
+    "timeout": "Temps d'espera esgotat. Si us plau, torna-ho a intentar."
+  },
+  "placeholders": {
+    "search": "Cerca...",
+    "select": "Selecciona una opció...",
+    "enterText": "Introdueix text...",
+    "loading": "Carregant dades...",
+    "noData": "No hi ha dades disponibles",
+    "noResults": "No s'han trobat resultats"
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "close": "Close",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "required": "Required",
+    "optional": "Optional",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "navigation": {
+    "account": "Account",
+    "chat": "Chat",
+    "upgrade": "Upgrade",
+    "logout": "Logout",
+    "backToChat": "Back to Chat"
+  },
+  "userAccount": {
+    "title": "Account Settings",
+    "welcome": "Welcome back, {{name}}",
+    "tabs": {
+      "personalInfo": "Personal Info",
+      "subscription": "Subscription",
+      "billing": "Billing"
+    }
+  },
+  "personalInfo": {
+    "title": "Personal Information",
+    "description": "Manage your personal details and account preferences",
+    "profileDetails": {
+      "title": "Profile Details",
+      "fullName": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name",
+        "help": "This name will be shown in your profile.",
+        "validation": {
+          "minLength": "Name must be at least 2 characters long",
+          "maxLength": "Name must be less than 100 characters"
+        }
+      },
+      "email": {
+        "label": "Email Address",
+        "placeholder": "Enter your email address",
+        "help": "Your email address for account notifications.",
+        "validation": {
+          "invalid": "Please enter a valid email address"
+        }
+      },
+      "company": {
+        "label": "Company (Optional)",
+        "placeholder": "Enter your company name",
+        "help": "Optional company or organization name.",
+        "validation": {
+          "maxLength": "Company name must be less than 200 characters"
+        }
+      }
+    },
+    "passwordChange": {
+      "title": "Change Password",
+      "currentPassword": {
+        "label": "Current Password",
+        "placeholder": "Enter current password",
+        "validation": {
+          "required": "Current password is required"
+        }
+      },
+      "newPassword": {
+        "label": "New Password",
+        "placeholder": "Enter new password",
+        "validation": {
+          "required": "New password is required",
+          "minLength": "Password must be at least 8 characters long",
+          "uppercase": "Password must contain at least one uppercase letter",
+          "lowercase": "Password must contain at least one lowercase letter",
+          "number": "Password must contain at least one number",
+          "special": "Password must contain at least one special character"
+        }
+      },
+      "confirmPassword": {
+        "label": "Confirm New Password",
+        "placeholder": "Confirm new password",
+        "validation": {
+          "mismatch": "Passwords do not match"
+        }
+      },
+      "requirements": {
+        "title": "Password Requirements:",
+        "items": [
+          "At least 8 characters long",
+          "Contains at least one uppercase letter",
+          "Contains at least one lowercase letter",
+          "Contains at least one number",
+          "Contains at least one special character"
+        ]
+      }
+    },
+    "actions": {
+      "saveChanges": "Save Changes",
+      "changePassword": "Change Password",
+      "helpText": "Changes are saved automatically when you click \"Save Changes\""
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully!",
+      "passwordChanged": "Password changed successfully!",
+      "updateFailed": "Failed to update profile",
+      "passwordChangeFailed": "Failed to change password"
+    }
+  },
+  "subscription": {
+    "title": "Subscription",
+    "description": "Manage your ArquiNorma subscription and plan details",
+    "currentPlan": {
+      "title": "Current Plan",
+      "free": {
+        "name": "ArquiNorma Free Plan",
+        "description": "Access to basic features and limited document processing",
+        "price": "Free",
+        "period": "Forever"
+      }
+    },
+    "plans": {
+      "free": {
+        "name": "Current Plan",
+        "features": [
+          "Up to 5 PDF documents",
+          "Basic chat functionality",
+          "Community support"
+        ]
+      },
+      "personal": {
+        "name": "Personal Plan",
+        "price": "€19.99",
+        "period": "month",
+        "recommended": "Recommended",
+        "features": [
+          "Up to 50 PDF documents",
+          "Advanced chat features",
+          "Email support"
+        ],
+        "button": "Upgrade to Personal"
+      },
+      "corporate": {
+        "name": "Corporate Plan",
+        "price": "€49.99",
+        "period": "month",
+        "features": [
+          "Unlimited documents",
+          "Team collaboration",
+          "Priority support"
+        ],
+        "button": "Upgrade to Corporate"
+      }
+    },
+    "support": {
+      "title": "Need help choosing a plan?",
+      "description": "Contact our support team for personalized recommendations.",
+      "button": "Contact Support"
+    }
+  },
+  "billing": {
+    "title": "Billing & Payments",
+    "description": "Manage your payment methods and view billing history",
+    "paymentMethod": {
+      "title": "Payment Method",
+      "update": "Update",
+      "add": "Add Payment Method",
+      "card": {
+        "expires": "Expires {{month}}/{{year}}"
+      }
+    },
+    "billingHistory": {
+      "title": "Billing History",
+      "table": {
+        "date": "Date",
+        "description": "Description",
+        "amount": "Amount",
+        "status": "Status",
+        "actions": "Actions",
+        "download": "Download"
+      },
+      "status": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed"
+      }
+    },
+    "billingInformation": {
+      "title": "Billing Information",
+      "companyName": {
+        "label": "Company Name (Optional)",
+        "placeholder": "Enter company name"
+      },
+      "vatNumber": {
+        "label": "VAT Number (Optional)",
+        "placeholder": "Enter VAT number"
+      },
+      "billingAddress": {
+        "label": "Billing Address",
+        "placeholder": "Enter your billing address"
+      },
+      "saveButton": "Save Billing Information"
+    }
+  },
+  "errors": {
+    "networkError": "Network error. Please check your connection and try again.",
+    "serverError": "Server error. Please try again later.",
+    "validationError": "Validation error. Please review the fields and try again.",
+    "unauthorized": "Unauthorized. Please log in again.",
+    "forbidden": "Access denied. You don't have permissions to perform this action.",
+    "notFound": "Resource not found.",
+    "timeout": "Timeout. Please try again."
+  },
+  "placeholders": {
+    "search": "Search...",
+    "select": "Select an option...",
+    "enterText": "Enter text...",
+    "loading": "Loading data...",
+    "noData": "No data available",
+    "noResults": "No results found"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

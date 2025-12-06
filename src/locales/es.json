@@ -1,0 +1,245 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Volver",
+    "close": "Cerrar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "success": "Éxito",
+    "error": "Error",
+    "warning": "Advertencia",
+    "info": "Información",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "navigation": {
+    "account": "Cuenta",
+    "chat": "Chat CTE",
+    "upgrade": "Actualizar",
+    "logout": "Cerrar sesión",
+    "backToChat": "Volver al chat"
+  },
+  "userAccount": {
+    "title": "Configuración de cuenta",
+    "welcome": "Bienvenido de nuevo, {{name}}",
+    "tabs": {
+      "personalInfo": "Información personal",
+      "subscription": "Suscripción",
+      "billing": "Facturación"
+    }
+  },
+  "personalInfo": {
+    "title": "Información personal",
+    "description": "Gestiona tus detalles personales y preferencias de cuenta",
+    "profileDetails": {
+      "title": "Detalles del perfil",
+      "fullName": {
+        "label": "Nombre completo",
+        "placeholder": "Introduce tu nombre completo",
+        "help": "Este nombre se mostrará en tu perfil.",
+        "validation": {
+          "minLength": "El nombre debe tener al menos 2 caracteres",
+          "maxLength": "El nombre debe tener menos de 100 caracteres"
+        }
+      },
+      "email": {
+        "label": "Dirección de correo electrónico",
+        "placeholder": "Introduce tu dirección de correo electrónico",
+        "help": "Tu dirección de correo electrónico para notificaciones de cuenta.",
+        "validation": {
+          "invalid": "Por favor, introduce una dirección de correo electrónico válida"
+        }
+      },
+      "company": {
+        "label": "Empresa (Opcional)",
+        "placeholder": "Introduce el nombre de tu empresa",
+        "help": "Nombre opcional de la empresa u organización.",
+        "validation": {
+          "maxLength": "El nombre de la empresa debe tener menos de 200 caracteres"
+        }
+      }
+    },
+    "passwordChange": {
+      "title": "Cambiar contraseña",
+      "currentPassword": {
+        "label": "Contraseña actual",
+        "placeholder": "Introduce la contraseña actual",
+        "validation": {
+          "required": "La contraseña actual es obligatoria"
+        }
+      },
+      "newPassword": {
+        "label": "Nueva contraseña",
+        "placeholder": "Introduce la nueva contraseña",
+        "validation": {
+          "required": "La nueva contraseña es obligatoria",
+          "minLength": "La contraseña debe tener al menos 8 caracteres",
+          "uppercase": "La contraseña debe contener al menos una letra mayúscula",
+          "lowercase": "La contraseña debe contener al menos una letra minúscula",
+          "number": "La contraseña debe contener al menos un número",
+          "special": "La contraseña debe contener al menos un carácter especial"
+        }
+      },
+      "confirmPassword": {
+        "label": "Confirmar nueva contraseña",
+        "placeholder": "Confirma la nueva contraseña",
+        "validation": {
+          "mismatch": "Las contraseñas no coinciden"
+        }
+      },
+      "requirements": {
+        "title": "Requisitos de la contraseña:",
+        "items": [
+          "Al menos 8 caracteres de longitud",
+          "Contiene al menos una letra mayúscula",
+          "Contiene al menos una letra minúscula",
+          "Contiene al menos un número",
+          "Contiene al menos un carácter especial"
+        ]
+      }
+    },
+    "actions": {
+      "saveChanges": "Guardar cambios",
+      "changePassword": "Cambiar contraseña",
+      "helpText": "Los cambios se guardan automáticamente cuando haces clic en \"Guardar cambios\""
+    },
+    "messages": {
+      "profileUpdated": "¡Perfil actualizado correctamente!",
+      "passwordChanged": "¡Contraseña cambiada correctamente!",
+      "updateFailed": "Error al actualizar el perfil",
+      "passwordChangeFailed": "Error al cambiar la contraseña"
+    }
+  },
+  "subscription": {
+    "title": "Suscripción",
+    "description": "Gestiona tu suscripción de ArquiNorma y detalles del plan",
+    "currentPlan": {
+      "title": "Plan actual",
+      "free": {
+        "name": "Plan gratuito de ArquiNorma",
+        "description": "Acceso a funciones básicas y procesamiento limitado de documentos",
+        "price": "Gratuito",
+        "period": "Para siempre"
+      }
+    },
+    "plans": {
+      "free": {
+        "name": "Plan actual",
+        "features": [
+          "Hasta 5 documentos PDF",
+          "Funcionalidad básica de chat",
+          "Soporte de la comunidad"
+        ]
+      },
+      "personal": {
+        "name": "Plan personal",
+        "price": "€19.99",
+        "period": "mes",
+        "recommended": "Recomendado",
+        "features": [
+          "Hasta 50 documentos PDF",
+          "Funciones avanzadas de chat",
+          "Soporte por correo electrónico"
+        ],
+        "button": "Actualizar a personal"
+      },
+      "corporate": {
+        "name": "Plan corporativo",
+        "price": "€49.99",
+        "period": "mes",
+        "features": [
+          "Documentos ilimitados",
+          "Colaboración en equipo",
+          "Soporte prioritario"
+        ],
+        "button": "Actualizar a corporativo"
+      }
+    },
+    "support": {
+      "title": "¿Necesitas ayuda para elegir un plan?",
+      "description": "Contacta con nuestro equipo de soporte para recomendaciones personalizadas.",
+      "button": "Contactar soporte"
+    }
+  },
+  "billing": {
+    "title": "Facturación y pagos",
+    "description": "Gestiona tus métodos de pago y visualiza el historial de facturación",
+    "paymentMethod": {
+      "title": "Método de pago",
+      "update": "Actualizar",
+      "add": "Añadir método de pago",
+      "card": {
+        "expires": "Caduca {{month}}/{{year}}"
+      }
+    },
+    "billingHistory": {
+      "title": "Historial de facturación",
+      "table": {
+        "date": "Fecha",
+        "description": "Descripción",
+        "amount": "Importe",
+        "status": "Estado",
+        "actions": "Acciones",
+        "download": "Descargar"
+      },
+      "status": {
+        "paid": "Pagado",
+        "pending": "Pendiente",
+        "failed": "Fallido"
+      }
+    },
+    "billingInformation": {
+      "title": "Información de facturación",
+      "companyName": {
+        "label": "Nombre de la empresa (Opcional)",
+        "placeholder": "Introduce el nombre de la empresa"
+      },
+      "vatNumber": {
+        "label": "Número de IVA (Opcional)",
+        "placeholder": "Introduce el número de IVA"
+      },
+      "billingAddress": {
+        "label": "Dirección de facturación",
+        "placeholder": "Introduce tu dirección de facturación"
+      },
+      "saveButton": "Guardar información de facturación"
+    }
+  },
+  "errors": {
+    "networkError": "Error de red. Por favor, verifica tu conexión e inténtalo de nuevo.",
+    "serverError": "Error del servidor. Por favor, inténtalo más tarde.",
+    "validationError": "Error de validación. Por favor, revisa los campos e inténtalo de nuevo.",
+    "unauthorized": "No autorizado. Por favor, inicia sesión de nuevo.",
+    "forbidden": "Acceso denegado. No tienes permisos para realizar esta acción.",
+    "notFound": "Recurso no encontrado.",
+    "timeout": "Tiempo de espera agotado. Por favor, inténtalo de nuevo."
+  },
+  "placeholders": {
+    "search": "Buscar...",
+    "select": "Selecciona una opción...",
+    "enterText": "Introduce texto...",
+    "loading": "Cargando datos...",
+    "noData": "No hay datos disponibles",
+    "noResults": "No se encontraron resultados"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

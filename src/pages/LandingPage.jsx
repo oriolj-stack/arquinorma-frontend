@@ -1,0 +1,1057 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import { submitWaitingListEntry, validateWaitingListForm } from '../services/waitingListService';
+
+/**
+ * ArquiNorma Landing Page
+ * 
+ * High-converting, frictionless landing page targeting young architects.
+ * Features:
+ * - Hero section with strong value proposition
+ * - Features/benefits showcase
+ * - How it works explanation
+ * - Pricing comparison
+ * - Trust elements and testimonials
+ * - Minimal-friction waiting list form
+ * - Consistent with app branding (amber/yellow theme)
+ */
+
+// Pricing tiers for comparison
+const PRICING_TIERS = [
+  {
+    id: 'basic',
+    name: 'Bàsic',
+    price: 5.99,
+    description: 'Per a projectes individuals',
+    features: [
+      { name: 'Projectes actius', value: '5', included: true },
+      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
+      { name: 'Documents personalitzats', value: '20/mes', included: true },
+      { name: 'Accés a tota la normativa', value: true, included: true },
+      { name: 'Suport per correu', value: true, included: true },
+      { name: 'Pujades de PDF', value: false, included: false },
+      { name: 'Comparació de documents', value: false, included: false },
+      { name: 'Accés API', value: false, included: false },
+    ],
+    cta: 'Començar amb Bàsic'
+  },
+  {
+    id: 'pro',
+    name: 'Professional',
+    price: 14.99,
+    description: 'Per a professionals exigents',
+    popular: true,
+    features: [
+      { name: 'Projectes actius', value: '25', included: true },
+      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
+      { name: 'Documents personalitzats', value: '100/mes', included: true },
+      { name: 'Accés a tota la normativa', value: true, included: true },
+      { name: 'Suport prioritari', value: true, included: true },
+      { name: 'Pujades de PDF', value: 'Il·limitades', included: true },
+      { name: 'Comparació de documents', value: true, included: true },
+      { name: 'Accés API', value: false, included: false },
+    ],
+    cta: 'Començar amb Pro'
+  },
+  {
+    id: 'studio',
+    name: 'Estudi',
+    price: 49.00,
+    description: 'Per a equips i estudis',
+    features: [
+      { name: 'Projectes actius', value: 'Il·limitats', included: true },
+      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
+      { name: 'Documents personalitzats', value: 'Il·limitats', included: true },
+      { name: 'Accés a tota la normativa', value: true, included: true },
+      { name: 'Suport dedicat', value: true, included: true },
+      { name: 'Pujades de PDF', value: 'Il·limitades', included: true },
+      { name: 'Comparació de documents', value: true, included: true },
+      { name: 'Accés API', value: true, included: true },
+      { name: 'Membres d\'equip', value: '10 inclosos', included: true },
+    ],
+    cta: 'Contactar vendes'
+  }
+];
+
+// Testimonials data
+const TESTIMONIALS = [
+  {
+    quote: "ArquiNorma m'ha estalviat hores de recerca en normativa. Ara trobo respostes en segons.",
+    author: "Maria García",
+    role: "Arquitecta, Barcelona",
+    avatar: "MG"
+  },
+  {
+    quote: "L'IA entén perfectament les preguntes tècniques. És com tenir un expert en normativa sempre disponible.",
+    author: "Jordi Puig",
+    role: "Arquitecte Tècnic, Girona",
+    avatar: "JP"
+  },
+  {
+    quote: "El millor és poder consultar la normativa específica de cada municipi. Imprescindible.",
+    author: "Anna Martí",
+    role: "Cap de Projectes, Tarragona",
+    avatar: "AM"
+  }
+];
+
+// Features data
+const FEATURES = [
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      </svg>
+    ),
+    title: 'IA especialitzada en normativa',
+    description: 'Fes preguntes en llenguatge natural i rep respostes precises basades en la normativa vigent.'
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    title: 'Tota la normativa urbanística',
+    description: 'Accedeix a les ordenances i normatives de tots els municipis de Catalunya en un sol lloc.'
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    title: 'Respostes instantànies',
+    description: 'Oblida\'t de buscar entre centenars de pàgines. Troba el que necessites en segons.'
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    ),
+    title: 'Xat CTE dedicat',
+    description: 'Accedeix a un xat especialitzat per consultes sobre el Codi Tècnic de l\'Edificació (CTE) i normativa de construcció.'
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+    ),
+    title: 'Gestió de projectes',
+    description: 'Organitza els teus projectes per municipi i consulta la normativa específica de cada un.'
+  },
+  {
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    ),
+    title: 'Sempre actualitzat',
+    description: 'La normativa s\'actualitza automàticament quan hi ha canvis oficials.'
+  }
+];
+
+// How it works steps
+const STEPS = [
+  {
+    number: '01',
+    title: 'Selecciona el municipi',
+    description: 'Tria el municipi del teu projecte i accedeix a tota la seva normativa urbanística.'
+  },
+  {
+    number: '02',
+    title: 'Fes la teva pregunta',
+    description: 'Escriu la teva consulta en llenguatge natural, com si parlessis amb un expert.'
+  },
+  {
+    number: '03',
+    title: 'Rep la resposta',
+    description: 'Obté respostes precises amb referències directes als articles de la normativa.'
+  },
+  {
+    number: '04',
+    title: 'Verifica i aplica',
+    description: 'Consulta les fonts originals i aplica la informació al teu projecte amb confiança.'
+  }
+];
+
+// Feature flags for pre-launch
+const SHOW_PRICING = false; // Set to true when ready to show pricing
+const SHOW_TESTIMONIALS = false; // Set to true when ready to show testimonials
+const SHOW_FINAL_CTA = false; // Set to true when ready to show final CTA banner
+const SHOW_PARTNER_LOGOS = false; // Set to true when partners are confirmed
+
+const LandingPage = () => {
+  const navigate = useNavigate();
+  
+  // Waiting list form state
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    company: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [formStatus, setFormStatus] = useState({ type: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Scroll state for navbar
+  const [scrolled, setScrolled] = useState(false);
+  
+  // Waiting list count state
+  const [waitingListCount, setWaitingListCount] = useState(null);
+  
+  // Random initials for social proof
+  const [randomInitials, setRandomInitials] = useState(['MG', 'JP', 'AM', 'RS']);
+
+  // Generate random initials (2 letters) using common Catalan letters
+  const generateRandomInitials = () => {
+    // Common letters in Catalan names and surnames
+    // Vowels: A, E, I, O, U (very common)
+    // Common consonants: B, C, D, F, G, J, L, M, N, P, R, S, T, V
+    // Less common but still used: H
+    // Avoid: K, Q, W, X, Y, Z (rare in Catalan names)
+    const commonVowels = 'AEIOU';
+    const commonConsonants = 'BCDFGJLMNPRSTV';
+    const lessCommon = 'H';
+    
+    // Create weighted pool: vowels appear more, then common consonants, then less common
+    const letterPool = commonVowels + commonVowels + commonConsonants + lessCommon;
+    
+    const generateInitial = () => {
+      const first = letterPool[Math.floor(Math.random() * letterPool.length)];
+      const second = letterPool[Math.floor(Math.random() * letterPool.length)];
+      return first + second;
+    };
+    
+    // Generate 4 unique initials
+    const initials = [];
+    while (initials.length < 4) {
+      const initial = generateInitial();
+      if (!initials.includes(initial)) {
+        initials.push(initial);
+      }
+    }
+    return initials;
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Fetch waiting list count
+  const fetchWaitingListCount = async () => {
+    try {
+      // Count all entries in waiting_list table
+      const { count, error } = await supabase
+        .from('waiting_list')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error fetching waiting list count:', error);
+        // Fallback to showing +10 if there's an error
+        setWaitingListCount(10);
+        return;
+      }
+
+      // Round up to nearest 10
+      // 1-9 -> +10, 10-19 -> +20, 20-29 -> +30, etc.
+      const roundedCount = count > 0 ? Math.ceil(count / 10) * 10 : 10;
+      setWaitingListCount(roundedCount);
+    } catch (err) {
+      console.error('Error in fetchWaitingListCount:', err);
+      // Fallback to showing +10 if there's an error
+      setWaitingListCount(10);
+    }
+  };
+
+  useEffect(() => {
+    fetchWaitingListCount();
+    // Generate random initials on page load
+    setRandomInitials(generateRandomInitials());
+  }, []);
+
+  // Handle waiting list form submission
+  const handleWaitingListSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFormStatus({ type: '', message: '' });
+    setFormErrors({});
+
+    // Client-side validation
+    const validation = validateWaitingListForm(formData);
+    if (!validation.isValid) {
+      setFormErrors(validation.errors);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Submit using the waiting list service
+      const result = await submitWaitingListEntry(formData, {
+        source: 'landing_page'
+      });
+
+      if (result.success) {
+        setFormStatus({ type: 'success', message: result.message });
+        if (!result.alreadyExists) {
+          setFormData({ full_name: '', email: '', company: '' });
+          // Refresh the count after successful submission
+          fetchWaitingListCount();
+          // Generate new random initials
+          setRandomInitials(generateRandomInitials());
+        }
+      } else {
+        setFormStatus({ type: 'error', message: result.message });
+      }
+    } catch (error) {
+      console.error('Error submitting waiting list:', error);
+      setFormStatus({ type: 'error', message: 'Hi ha hagut un error. Torna-ho a provar.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle form field change with error clearing
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    if (formStatus.message) {
+      setFormStatus({ type: '', message: '' });
+    }
+  };
+
+  // Scroll to section
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Scroll to top
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <button 
+              onClick={scrollToTop}
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <span className={`text-xl font-bold ${scrolled ? 'text-gray-900' : 'text-gray-900'}`}>
+                ArquiNorma
+              </span>
+            </button>
+
+            {/* Nav Links - Desktop */}
+            <div className="hidden md:flex items-center gap-8">
+              <button 
+                onClick={() => scrollToSection('features')} 
+                className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                Funcionalitats
+              </button>
+              <button 
+                onClick={() => scrollToSection('how-it-works')} 
+                className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                Com funciona
+              </button>
+              {SHOW_PRICING && (
+                <button 
+                  onClick={() => scrollToSection('pricing')} 
+                  className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+                >
+                  Preus
+                </button>
+              )}
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex items-center gap-3">
+              <Link 
+                to="/login" 
+                className={`hidden sm:block text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                Iniciar sessió
+              </Link>
+              <button
+                onClick={() => scrollToSection('waitlist')}
+                className="px-4 py-2 bg-amber-400 text-gray-900 text-sm font-semibold rounded-lg hover:bg-amber-500 transition-colors shadow-md shadow-amber-400/20"
+              >
+                Unir-se a la llista
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-50/50 to-white pointer-events-none" />
+        <div className="absolute top-20 right-0 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-100/40 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Hero Content */}
+            <div className="text-center lg:text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium mb-6">
+                <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                Nova plataforma per arquitectes
+              </div>
+              
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Consulta la normativa urbanística
+                <span className="text-amber-500"> amb IA</span>
+              </h1>
+              
+              {/* Subheadline */}
+              <div className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 space-y-2">
+                <p>
+                  Troba informació a l'instant sobre ordenances, PGM i normativa municipal específica.
+                </p>
+                <p className="font-semibold text-gray-900">
+                  El primer assistent normatiu per a arquitectes.
+                </p>
+              </div>
+              
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <button
+                  onClick={() => scrollToSection('waitlist')}
+                  className="px-8 py-4 bg-amber-400 text-gray-900 text-lg font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 hover:-translate-y-0.5"
+                >
+                  Unir-se a la llista d'espera
+                </button>
+              </div>
+              
+              {/* Social Proof Mini */}
+              <div className="mt-10 flex items-center justify-center lg:justify-start gap-4">
+                <div className="flex -space-x-3">
+                  {randomInitials.map((initials, i) => (
+                    <div 
+                      key={i}
+                      className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-400 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-semibold"
+                    >
+                      {initials}
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">
+                    {waitingListCount !== null ? `+${waitingListCount}` : '+10'}
+                  </span> arquitectes a la llista d'espera
+                </div>
+              </div>
+            </div>
+
+            {/* Hero Visual */}
+            <div className="relative">
+              <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                {/* Browser Chrome */}
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 bg-red-400 rounded-full" />
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                    <div className="w-3 h-3 bg-green-400 rounded-full" />
+                  </div>
+                  <div className="flex-1 mx-4">
+                    <div className="bg-white rounded-lg px-4 py-1.5 text-sm text-gray-400 border border-gray-200">
+                      app.arquinorma.cat
+                    </div>
+                  </div>
+                </div>
+                
+                {/* App Mockup */}
+                <div className="p-6 bg-gray-50">
+                  {/* Chat Interface Mockup */}
+                  <div className="space-y-4">
+                    {/* User Message */}
+                    <div className="flex justify-end">
+                      <div className="bg-amber-400 text-gray-900 rounded-2xl rounded-tr-md px-4 py-3 max-w-xs">
+                        <p className="text-sm">Quina és l'alçada màxima edificable a la zona 13a de Barcelona?</p>
+                      </div>
+                    </div>
+                    
+                    {/* AI Response */}
+                    <div className="flex justify-start">
+                      <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 max-w-sm shadow-sm">
+                        <p className="text-sm text-gray-700 mb-2">
+                          Segons l'article 234 de les Normes Urbanístiques del PGM, l'alçada reguladora màxima a la zona 13a és de <strong>20,75 metres</strong>.
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span>Font: PGM Barcelona, Art. 234</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Typing Indicator */}
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 rounded-full px-4 py-2">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}} />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Floating Elements */}
+              <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">947 municipis</span>
+                </div>
+              </div>
+              
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-3 border border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Respostes en &lt;3s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Logos / Trust Bar */}
+      {SHOW_PARTNER_LOGOS && (
+        <section className="py-12 bg-gray-50 border-y border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-center text-sm text-gray-500 mb-8">
+              Dissenyat per arquitectes, per a arquitectes de Catalunya
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-60">
+              {/* Placeholder for partner/client logos */}
+              <div className="text-2xl font-bold text-gray-400">COAC</div>
+              <div className="text-2xl font-bold text-gray-400">UPC</div>
+              <div className="text-2xl font-bold text-gray-400">ETSAB</div>
+              <div className="text-2xl font-bold text-gray-400">AMB</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Features Section */}
+      <section id="features" className="py-20 lg:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Tot el que necessites per treballar més ràpid
+            </h2>
+            <p className="text-lg text-gray-600">
+              Deixa de perdre hores buscant en documents. ArquiNorma t'ajuda a trobar 
+              la informació que necessites en segons.
+            </p>
+          </div>
+
+          {/* Features Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {FEATURES.map((feature, index) => (
+              <div 
+                key={index}
+                className="group p-6 bg-white rounded-2xl border border-gray-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-100/50 transition-all duration-300"
+              >
+                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-4 group-hover:bg-amber-400 group-hover:text-white transition-colors">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-20 lg:py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Simple com fer una pregunta
+            </h2>
+            <p className="text-lg text-gray-600">
+              Sense corba d'aprenentatge. Comença a obtenir respostes en menys d'un minut.
+            </p>
+          </div>
+
+          {/* Steps */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {STEPS.map((step, index) => (
+              <div key={index} className="relative">
+                {/* Connector Line */}
+                {index < STEPS.length - 1 && (
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-amber-300 to-transparent" />
+                )}
+                
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-400 text-gray-900 rounded-2xl text-2xl font-bold mb-4 shadow-lg shadow-amber-400/30">
+                    {step.number}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-600">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust Note */}
+          <div className="mt-12 text-center">
+            <p className="text-base text-amber-500 max-w-2xl mx-auto space-y-1">
+              <span className="block">Les respostes es basen únicament en els documents normatius oficials.</span>
+              <span className="block">Evita al·lucinacions i respostes no vinculants.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      {SHOW_TESTIMONIALS && (
+        <section className="py-20 lg:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Section Header */}
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                El que diuen els nostres usuaris
+              </h2>
+              <p className="text-lg text-gray-600">
+                Arquitectes de tot Catalunya ja confien en ArquiNorma
+              </p>
+            </div>
+
+            {/* Testimonials Grid */}
+            <div className="grid md:grid-cols-3 gap-8">
+              {TESTIMONIALS.map((testimonial, index) => (
+                <div 
+                  key={index}
+                  className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  {/* Quote Icon */}
+                  <svg className="w-10 h-10 text-amber-300 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                  </svg>
+                  
+                  <p className="text-gray-700 mb-6">
+                    "{testimonial.quote}"
+                  </p>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-400 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      {testimonial.avatar}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{testimonial.author}</p>
+                      <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pricing Section */}
+      {SHOW_PRICING && (
+        <section id="pricing" className="py-20 lg:py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Plans simples, sense sorpreses
+            </h2>
+            <p className="text-lg text-gray-600">
+              Tria el pla que s'adapti a les teves necessitats. Canvia o cancel·la quan vulguis.
+            </p>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {PRICING_TIERS.map((tier) => (
+              <div 
+                key={tier.id}
+                className={`relative bg-white rounded-2xl p-6 ${
+                  tier.popular 
+                    ? 'border-2 border-amber-400 shadow-xl shadow-amber-100/50' 
+                    : 'border border-gray-200'
+                }`}
+              >
+                {/* Popular Badge */}
+                {tier.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="px-4 py-1 bg-amber-400 text-gray-900 text-sm font-semibold rounded-full">
+                      Més popular
+                    </span>
+                  </div>
+                )}
+
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{tier.name}</h3>
+                  <p className="text-sm text-gray-500 mb-4">{tier.description}</p>
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-4xl font-bold text-gray-900">€{tier.price.toFixed(2)}</span>
+                    <span className="text-gray-500">/mes</span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-6">
+                  {tier.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3">
+                      {feature.included ? (
+                        <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                      <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
+                        {feature.name}
+                        {typeof feature.value === 'string' && feature.included && (
+                          <span className="font-medium text-gray-900"> — {feature.value}</span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <button
+                  onClick={() => scrollToSection('waitlist')}
+                  className={`w-full py-3 rounded-xl font-semibold transition-all ${
+                    tier.popular
+                      ? 'bg-amber-400 text-gray-900 hover:bg-amber-500 shadow-md shadow-amber-400/20'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {tier.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Comparison Table */}
+          <div className="mt-16 max-w-5xl mx-auto">
+            <h3 className="text-xl font-bold text-gray-900 text-center mb-8">
+              Comparació detallada
+            </h3>
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 bg-gray-50">
+                        Característica
+                      </th>
+                      {PRICING_TIERS.map((tier) => (
+                        <th key={tier.id} className={`py-4 px-6 text-center text-sm font-semibold ${tier.popular ? 'bg-amber-50 text-amber-900' : 'bg-gray-50 text-gray-900'}`}>
+                          {tier.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {PRICING_TIERS[0].features.map((_, featureIndex) => (
+                      <tr key={featureIndex} className="hover:bg-gray-50">
+                        <td className="py-4 px-6 text-sm text-gray-700">
+                          {PRICING_TIERS[0].features[featureIndex].name}
+                        </td>
+                        {PRICING_TIERS.map((tier) => {
+                          const feature = tier.features[featureIndex];
+                          if (!feature) return <td key={tier.id} className="py-4 px-6 text-center">—</td>;
+                          return (
+                            <td key={tier.id} className={`py-4 px-6 text-center text-sm ${tier.popular ? 'bg-amber-50/50' : ''}`}>
+                              {feature.included ? (
+                                typeof feature.value === 'string' ? (
+                                  <span className="font-medium text-gray-900">{feature.value}</span>
+                                ) : (
+                                  <svg className="w-5 h-5 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )
+                              ) : (
+                                <svg className="w-5 h-5 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                    {/* Studio extra feature */}
+                    <tr className="hover:bg-gray-50">
+                      <td className="py-4 px-6 text-sm text-gray-700">Membres d'equip</td>
+                      <td className="py-4 px-6 text-center text-sm text-gray-400">1</td>
+                      <td className="py-4 px-6 text-center text-sm bg-amber-50/50 text-gray-400">1</td>
+                      <td className="py-4 px-6 text-center text-sm font-medium text-gray-900">10 inclosos</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      )}
+
+      {/* Waiting List Section */}
+      <section id="waitlist" className="py-20 lg:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center">
+            {/* Section Header */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-400/10 text-amber-400 rounded-full text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              Accés anticipat disponible
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Uneix-te a la llista d'espera
+            </h2>
+            <p className="text-lg text-gray-400 mb-8">
+              Sigues dels primers a provar ArquiNorma. Rebràs accés prioritari quan llancem.
+            </p>
+
+            {/* Form */}
+            <form onSubmit={handleWaitingListSubmit} className="space-y-4">
+              {/* Full Name */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Nom complet *"
+                  value={formData.full_name}
+                  onChange={(e) => handleFormChange('full_name', e.target.value)}
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-colors ${
+                    formErrors.full_name ? 'border-red-400' : 'border-white/20'
+                  }`}
+                />
+                {formErrors.full_name && (
+                  <p className="mt-1 text-sm text-red-400">{formErrors.full_name}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <input
+                  type="email"
+                  placeholder="Correu electrònic *"
+                  value={formData.email}
+                  onChange={(e) => handleFormChange('email', e.target.value)}
+                  className={`w-full px-4 py-3 bg-white/10 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-colors ${
+                    formErrors.email ? 'border-red-400' : 'border-white/20'
+                  }`}
+                />
+                {formErrors.email && (
+                  <p className="mt-1 text-sm text-red-400">{formErrors.email}</p>
+                )}
+              </div>
+
+              {/* Company (optional) */}
+              <input
+                type="text"
+                placeholder="Empresa (opcional)"
+                value={formData.company}
+                onChange={(e) => handleFormChange('company', e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              />
+              
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-4 bg-amber-400 text-gray-900 font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-gray-900/30 border-t-gray-900 rounded-full animate-spin" />
+                    Enviant...
+                  </div>
+                ) : (
+                  'Unir-me a la llista d\'espera'
+                )}
+              </button>
+
+              {/* Status Message */}
+              {formStatus.message && (
+                <div className={`p-4 rounded-xl flex items-start gap-3 ${
+                  formStatus.type === 'success' 
+                    ? 'bg-green-500/20 text-green-300' 
+                    : 'bg-red-500/20 text-red-300'
+                }`}>
+                  {formStatus.type === 'success' ? (
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  <span>{formStatus.message}</span>
+                </div>
+              )}
+            </form>
+
+            {/* Privacy Note */}
+            <p className="mt-6 text-sm text-gray-500">
+              Respectem la teva privacitat. No compartirem el teu correu amb tercers.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      {SHOW_FINAL_CTA && (
+        <section className="py-20 lg:py-32">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-gradient-to-br from-amber-100 via-amber-50 to-orange-50 rounded-3xl p-8 sm:p-12 lg:p-16 text-center relative overflow-hidden">
+              {/* Background Decoration */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-200/50 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-200/50 rounded-full blur-3xl" />
+              
+              <div className="relative">
+                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                  Preparat per revolucionar la teva manera de treballar?
+                </h2>
+                <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                  Uneix-te als arquitectes que ja estan estalviant hores de feina amb ArquiNorma.
+                </p>
+                <button
+                  onClick={() => scrollToSection('waitlist')}
+                  className="px-8 py-4 bg-amber-400 text-gray-900 text-lg font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40"
+                >
+                  Començar ara — És gratis
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <span className="text-xl font-bold">ArquiNorma</span>
+              </div>
+              <p className="text-gray-400 max-w-sm">
+                L'assistent d'IA que ajuda els arquitectes a consultar la normativa urbanística de Catalunya.
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="font-semibold mb-4">Producte</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Funcionalitats</button></li>
+                {SHOW_PRICING && (
+                  <li><button onClick={() => scrollToSection('pricing')} className="hover:text-white transition-colors">Preus</button></li>
+                )}
+                <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition-colors">Com funciona</button></li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Política de privacitat</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Termes d'ús</Link></li>
+                <li><Link to="/legal" className="hover:text-white transition-colors">Avís legal</Link></li>
+                <li><a href="mailto:suport@arquinorma.cat" className="hover:text-white transition-colors">Suport</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gray-500 text-sm">
+              © {new Date().getFullYear()} ArquiNorma. Tots els drets reservats.
+            </p>
+            <div className="flex items-center gap-4">
+              {/* Social Links Placeholder */}
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                </svg>
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;
+
