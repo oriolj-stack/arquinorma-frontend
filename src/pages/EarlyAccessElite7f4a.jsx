@@ -9,6 +9,23 @@ import { Link } from 'react-router-dom';
  * 
  * This page is NOT linked in navigation - access is by invitation only.
  */
+
+/**
+ * Get the API base URL for beta registration
+ * In development: uses production Vercel URL (since API is serverless)
+ * In production: uses relative URL (works with Vercel)
+ */
+const getApiBaseUrl = () => {
+  // In development, use production URL since API routes are Vercel serverless functions
+  if (import.meta.env.DEV) {
+    // Use production URL for local development
+    // This allows testing the form locally against the deployed API
+    return 'https://arquinorma.cat';
+  }
+  // In production, use relative URL (works with Vercel)
+  return '';
+};
+
 export default function EarlyAccessElite7f4a() {
   const [form, setForm] = useState({
     name: '',
@@ -42,7 +59,12 @@ export default function EarlyAccessElite7f4a() {
         additional_metadata: { notes: form.notes }
       };
 
-      const resp = await fetch('/api/beta-register', {
+      const apiBaseUrl = getApiBaseUrl();
+      const apiUrl = `${apiBaseUrl}/api/beta-register`;
+      
+      console.log('Calling beta-register API:', apiUrl);
+      
+      const resp = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
