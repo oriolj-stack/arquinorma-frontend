@@ -20,6 +20,7 @@ import StaffLoginPage from '/src/pages/StaffLoginPage';
 import AdminUploadPage from '/src/pages/AdminUploadPage';
 import AdminListPage from '/src/pages/AdminListPage';
 import AdminWaitingListPage from '/src/pages/AdminWaitingListPage';
+import EarlyAccessElite7f4a from '/src/pages/EarlyAccessElite7f4a';
 
 /**
  * Navigation Bar Component
@@ -42,10 +43,11 @@ const NavigationBar = ({ user, onLogout }) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Don't show navigation on login page, landing page, staff routes, subscription page, or if user is not authenticated
+  // Don't show navigation on login page, landing page, staff routes, subscription page, early access page, or if user is not authenticated
   if (location.pathname === '/login' || 
       location.pathname === '/' ||
       location.pathname === '/subscription' ||
+      location.pathname === '/early-access-elite-7f4a' ||
       location.pathname.startsWith('/staff') || 
       location.pathname.startsWith('/admin') || 
       !user) {
@@ -643,6 +645,17 @@ function App() {
             <Route 
               path="/terms" 
               element={<TermsOfUsePage />} 
+            />
+
+            {/* 
+              PUBLIC ROUTE: Early Access Elite (Private Beta Registration)
+              - Accessible only via direct URL: /early-access-elite-7f4a
+              - NOT linked in navigation (obscure URL for private beta)
+              - Allows beta users to register and create accounts
+            */}
+            <Route 
+              path="/early-access-elite-7f4a" 
+              element={<EarlyAccessElite7f4a />} 
             />
 
             {/* 
