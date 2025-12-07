@@ -21,9 +21,36 @@ const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    // Enable CORS
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Get origin from request
+    const origin = req.headers.origin || '';
+    
+    // Allow localhost and production domains
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      'https://arquinorma.cat',
+      'https://www.arquinorma.cat',
+      'https://arquinorma-frontend.vercel.app'
+    ];
+    
+    // Check if origin is allowed
+    const isAllowedOrigin = origin && (
+      allowedOrigins.includes(origin) || 
+      origin.startsWith('http://localhost') || 
+      origin.startsWith('http://127.0.0.1')
+    );
+    
+    // Set CORS headers
+    // Use specific origin if allowed, otherwise use * (but can't use credentials with *)
+    if (isAllowedOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Credentials', 'false');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
       'Access-Control-Allow-Headers',

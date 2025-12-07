@@ -63,12 +63,25 @@ export default function EarlyAccessElite7f4a() {
       const apiUrl = `${apiBaseUrl}/api/beta-register`;
       
       console.log('Calling beta-register API:', apiUrl);
+      console.log('Form data:', { ...formData, password: '***' }); // Don't log password
       
-      const resp = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      let resp;
+      try {
+        resp = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          // Don't include credentials for CORS compatibility
+          credentials: 'omit'
+        });
+      } catch (networkError) {
+        console.error('Network error:', networkError);
+        // Handle network errors (CORS, connection refused, etc.)
+        if (networkError.name === 'TypeError' && networkError.message.includes('fetch')) {
+          throw new Error('Error de connexió: No s\'ha pogut connectar amb el servidor. Verifiqueu la vostra connexió a Internet.');
+        }
+        throw new Error(`Error de xarxa: ${networkError.message}`);
+      }
 
       // Check if response is OK and has content
       if (!resp.ok) {
