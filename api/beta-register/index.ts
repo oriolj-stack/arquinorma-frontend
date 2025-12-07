@@ -4,36 +4,58 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  console.error('Missing environment variables:', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_SERVICE_ROLE_KEY
+  });
+  // Don't throw here - handle in the handler to return proper JSON response
 }
 
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false }
-});
+const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false }
+    })
+  : null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).json({ success: true });
-  }
-
   try {
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.status(200).json({ success: true });
+    }
+
     if (req.method !== 'POST') {
       return res.status(405).json({ success: false, error: 'Method Not Allowed' });
     }
 
+    // Check if Supabase client is initialized
+    if (!supabaseAdmin) {
+      console.error('Supabase client not initialized - missing environment variables');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Server configuration error: Missing Supabase credentials'
+      });
+    }
+
+    // Validate request body exists
+    if (!req.body) {
+      return res.status(400).json({ success: false, error: 'Request body is required' });
+    }
+
     const { email, password, name, company, role, additional_metadata } = req.body;
 
+    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({ success: false, error: 'email and password required' });
     }
@@ -50,21 +72,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 1) Create user with service role
+    console.log('Creating user with email:', email);
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: email.trim(),
       password,
       email_confirm: true,
       user_metadata: {
-        name,
-        company,
-        role,
+        name: name || null,
+        company: company || null,
+        role: role || null,
         beta: true,
         ...(additional_metadata || {})
       }
     });
 
     if (createError) {
-      console.error('createUser error', createError);
+      console.error('createUser error:', createError);
       return res.status(400).json({ 
         success: false,
         error: createError.message || 'Failed to create user'
@@ -72,22 +95,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!userData?.user?.id) {
-      return res.status(400).json({ 
+      console.error('No user ID returned from createUser');
+      return res.status(500).json({ 
         success: false,
         error: 'User created but no user ID returned' 
       });
     }
 
     const user_id = userData.user.id;
+    console.log('User created successfully with ID:', user_id);
 
     // 2) Insert into beta_registrations
+    console.log('Inserting into beta_registrations table');
     const { error: insertError } = await supabaseAdmin
       .from('beta_registrations')
       .insert([{
-        email,
-        name,
-        company,
-        role,
+        email: email.trim(),
+        name: name || null,
+        company: company || null,
+        role: role || null,
         additional_metadata: additional_metadata || {},
         user_id,
         granted: true,
@@ -95,26 +121,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }]);
 
     if (insertError) {
-      console.error('insert error', insertError);
+      console.error('insert error:', insertError);
       // Optionally delete the created user if insertion fails
       try {
         await supabaseAdmin.auth.admin.deleteUser(user_id);
+        console.log('Deleted user after registration insert failed');
       } catch (deleteError) {
         console.error('Failed to delete user after registration insert failed:', deleteError);
       }
-      return res.status(400).json({ 
+      return res.status(500).json({ 
         success: false,
         error: insertError.message || 'Failed to register beta access'
       });
     }
 
+    console.log('Beta registration completed successfully');
     return res.status(201).json({ success: true });
 
   } catch (err: any) {
     console.error('Beta registration error:', err);
-    return res.status(400).json({ 
+    console.error('Error stack:', err.stack);
+    return res.status(500).json({ 
       success: false,
-      error: err.message || 'An unexpected error occurred'
+      error: err.message || 'An unexpected server error occurred'
     });
   }
 }
