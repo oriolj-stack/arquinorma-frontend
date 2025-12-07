@@ -155,6 +155,17 @@ const ChatPage = () => {
   
   // Backend API configuration
   const API_BASE_URL = env.api.baseUrl;
+  
+  // Debug: Expose API URL to window for console debugging
+  if (typeof window !== 'undefined') {
+    window.__ARQUINORMA_DEBUG__ = {
+      apiBaseUrl: API_BASE_URL,
+      env: import.meta.env.MODE,
+      backendUrl: import.meta.env.VITE_BACKEND_URL,
+      timestamp: new Date().toISOString()
+    };
+    console.log('🔧 ArquiNorma Debug Info:', window.__ARQUINORMA_DEBUG__);
+  }
 
   /**
    * Effect to load user data and subscription info
