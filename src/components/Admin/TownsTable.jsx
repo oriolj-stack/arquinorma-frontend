@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { env } from '../../config/env';
 
-// Use proxy in development, direct URL in production
-const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000');
+// Use the centralized API base URL from env config
+const API_BASE = env.api.baseUrl;
 
 const TownsTable = () => {
   const [towns, setTowns] = useState([]);

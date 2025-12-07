@@ -101,7 +101,9 @@ export const env = {
   
   // Backend API Configuration
   api: {
-    baseUrl: getEnvVar('VITE_BACKEND_URL', '', false), // Use proxy in development
+    // In production, VITE_BACKEND_URL must be set to the Cloudflare Tunnel URL
+    // In development, defaults to localhost:8000
+    baseUrl: getEnvVar('VITE_BACKEND_URL', import.meta.env.DEV ? 'http://localhost:8000' : '', false),
   },
   
   // Application Configuration

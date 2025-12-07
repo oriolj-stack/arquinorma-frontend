@@ -160,7 +160,7 @@ const PaymentForm = ({
 
     try {
       // Step 1: Create SetupIntent
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {

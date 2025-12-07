@@ -247,7 +247,7 @@ const AddPaymentMethodModal = ({ isOpen, onClose, onSuccess, userId, userEmail }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No hi ha sessió activa');
 
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
 
       // Create SetupIntent
       const setupResponse = await fetch(`${backendUrl}/stripe-elements/create-setup-intent`, {
@@ -726,7 +726,7 @@ const SubscriptionPage = () => {
         name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuari'
       });
 
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
 
       // Load subscription status
       const subResponse = await fetch(
@@ -772,7 +772,7 @@ const SubscriptionPage = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
 
       const response = await fetch(`${backendUrl}/stripe-elements/cancel-subscription`, {
         method: 'POST',
@@ -802,7 +802,7 @@ const SubscriptionPage = () => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
 
       const response = await fetch(
         `${backendUrl}/stripe-elements/payment-method/${pmId}?user_id=${user.id}`,
@@ -824,7 +824,7 @@ const SubscriptionPage = () => {
   const handleChangePlan = async (newTier) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const backendUrl = env.api?.baseUrl || 'http://localhost:8000';
+      const backendUrl = env.api.baseUrl;
 
       // If no active subscription, create new one
       if (!subscription?.has_subscription || subscription?.tier === 'free') {
