@@ -24,30 +24,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).json({ success: true });
   }
 
   try {
     if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method Not Allowed' });
+      return res.status(405).json({ success: false, error: 'Method Not Allowed' });
     }
 
     const { email, password, name, company, role, additional_metadata } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'email and password required' });
+      return res.status(400).json({ success: false, error: 'email and password required' });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
     }
 
     // Validate password length
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
     }
 
     // 1) Create user with service role
@@ -66,14 +65,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (createError) {
       console.error('createUser error', createError);
-      return res.status(500).json({ 
-        error: createError.message || 'Failed to create user',
-        details: createError
+      return res.status(400).json({ 
+        success: false,
+        error: createError.message || 'Failed to create user'
       });
     }
 
     if (!userData?.user?.id) {
-      return res.status(500).json({ error: 'User created but no user ID returned' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'User created but no user ID returned' 
+      });
     }
 
     const user_id = userData.user.id;
@@ -100,23 +102,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch (deleteError) {
         console.error('Failed to delete user after registration insert failed:', deleteError);
       }
-      return res.status(500).json({ 
-        error: insertError.message || 'Failed to register beta access',
-        details: insertError
+      return res.status(400).json({ 
+        success: false,
+        error: insertError.message || 'Failed to register beta access'
       });
     }
 
-    return res.status(201).json({ 
-      ok: true, 
-      user_id,
-      message: 'Beta registration successful'
-    });
+    return res.status(201).json({ success: true });
 
   } catch (err: any) {
     console.error('Beta registration error:', err);
-    return res.status(500).json({ 
-      error: 'internal_error',
-      message: err.message || 'An unexpected error occurred'
+    return res.status(400).json({ 
+      success: false,
+      error: err.message || 'An unexpected error occurred'
     });
   }
 }
