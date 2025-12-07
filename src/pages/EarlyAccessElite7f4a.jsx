@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
  * Early Access Elite Signup Page
  * 
  * Private beta registration page accessible only via direct URL:
- * /early-access-elite-7f4a
+ * /private-beta
  * 
  * This page is NOT linked in navigation - access is by invitation only.
  */
@@ -55,7 +55,7 @@ export default function EarlyAccessElite7f4a() {
       // Success
       setMsg({
         type: 'success',
-        text: 'Access granted! Your account has been created. You can now log in with your credentials.',
+        text: 'Accés concedit! El vostre compte s\'ha creat. Ara podeu iniciar sessió amb les vostres credencials.',
         user_id: data.user_id
       });
 
@@ -65,7 +65,7 @@ export default function EarlyAccessElite7f4a() {
     } catch (err) {
       setMsg({
         type: 'error',
-        text: err.message || 'Failed to create account. Please try again.'
+        text: err.message || 'No s\'ha pogut crear el compte. Si us plau, torneu-ho a provar.'
       });
     } finally {
       setLoading(false);
@@ -85,10 +85,10 @@ export default function EarlyAccessElite7f4a() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Exclusive Early Access
+              Accés Exclusiu Anticipat
             </h1>
             <p className="text-gray-600 text-sm">
-              Private beta access for selected professionals
+              Accés beta privat per a professionals seleccionats
             </p>
           </div>
 
@@ -97,7 +97,7 @@ export default function EarlyAccessElite7f4a() {
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Name <span className="text-red-500">*</span>
+                Nom <span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
@@ -107,7 +107,7 @@ export default function EarlyAccessElite7f4a() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200"
-                placeholder="Your full name"
+                placeholder="El vostre nom complet"
                 disabled={loading}
               />
             </div>
@@ -115,7 +115,7 @@ export default function EarlyAccessElite7f4a() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email <span className="text-red-500">*</span>
+                Correu electrònic <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
@@ -125,7 +125,7 @@ export default function EarlyAccessElite7f4a() {
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200"
-                placeholder="your.email@example.com"
+                placeholder="el.vostre.correu@exemple.com"
                 disabled={loading}
               />
             </div>
@@ -133,7 +133,7 @@ export default function EarlyAccessElite7f4a() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password <span className="text-red-500">*</span>
+                Contrasenya <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
@@ -144,16 +144,16 @@ export default function EarlyAccessElite7f4a() {
                 required
                 minLength={6}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200"
-                placeholder="Minimum 6 characters"
+                placeholder="Mínim 6 caràcters"
                 disabled={loading}
               />
-              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+              <p className="mt-1 text-xs text-gray-500">Mínim 6 caràcters</p>
             </div>
 
             {/* Company */}
             <div>
               <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-                Company
+                Empresa
               </label>
               <input
                 id="company"
@@ -162,7 +162,7 @@ export default function EarlyAccessElite7f4a() {
                 value={form.company}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200"
-                placeholder="Your company or firm"
+                placeholder="La vostra empresa o despatx"
                 disabled={loading}
               />
             </div>
@@ -170,7 +170,7 @@ export default function EarlyAccessElite7f4a() {
             {/* Role */}
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                Role
+                Càrrec
               </label>
               <input
                 id="role"
@@ -179,7 +179,7 @@ export default function EarlyAccessElite7f4a() {
                 value={form.role}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200"
-                placeholder="e.g., Architect, Project Manager"
+                placeholder="p. ex., Arquitecte, Director de projecte"
                 disabled={loading}
               />
             </div>
@@ -187,7 +187,7 @@ export default function EarlyAccessElite7f4a() {
             {/* Notes */}
             <div>
               <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Notes
+                Notes addicionals
               </label>
               <textarea
                 id="notes"
@@ -196,7 +196,7 @@ export default function EarlyAccessElite7f4a() {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-transparent transition duration-200 resize-none"
-                placeholder="Any additional information..."
+                placeholder="Qualsevol informació addicional..."
                 disabled={loading}
               />
             </div>
@@ -213,10 +213,10 @@ export default function EarlyAccessElite7f4a() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Creating Account...
+                  Creant compte...
                 </span>
               ) : (
-                'Request Access'
+                'Sol·licitar accés'
               )}
             </button>
           </form>
@@ -246,7 +246,7 @@ export default function EarlyAccessElite7f4a() {
                         to="/login"
                         className="inline-flex items-center text-sm font-medium text-green-700 hover:text-green-800 underline"
                       >
-                        Go to Login Page →
+                        Anar a la pàgina d'inici de sessió →
                       </Link>
                     </div>
                   )}
@@ -257,7 +257,7 @@ export default function EarlyAccessElite7f4a() {
 
           {/* Footnote */}
           <p className="mt-6 text-xs text-center text-gray-500">
-            This access can be revoked at any time.
+            Aquest accés es pot revocar en qualsevol moment.
           </p>
         </div>
       </div>

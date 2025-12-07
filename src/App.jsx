@@ -47,7 +47,7 @@ const NavigationBar = ({ user, onLogout }) => {
   if (location.pathname === '/login' || 
       location.pathname === '/' ||
       location.pathname === '/subscription' ||
-      location.pathname === '/early-access-elite-7f4a' ||
+      location.pathname === '/private-beta' ||
       location.pathname.startsWith('/staff') || 
       location.pathname.startsWith('/admin') || 
       !user) {
@@ -649,12 +649,12 @@ function App() {
 
             {/* 
               PUBLIC ROUTE: Early Access Elite (Private Beta Registration)
-              - Accessible only via direct URL: /early-access-elite-7f4a
+              - Accessible only via direct URL: /private-beta
               - NOT linked in navigation (obscure URL for private beta)
               - Allows beta users to register and create accounts
             */}
             <Route 
-              path="/early-access-elite-7f4a" 
+              path="/private-beta" 
               element={<EarlyAccessElite7f4a />} 
             />
 
