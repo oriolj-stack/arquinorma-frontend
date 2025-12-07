@@ -33,30 +33,32 @@ export default function EarlyAccessElite7f4a() {
     setMsg(null);
 
     try {
+      const formData = {
+        email: form.email,
+        password: form.password,
+        name: form.name,
+        company: form.company,
+        role: form.role,
+        additional_metadata: { notes: form.notes }
+      };
+
       const resp = await fetch('/api/beta-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          name: form.name,
-          company: form.company,
-          role: form.role,
-          additional_metadata: { notes: form.notes }
-        })
+        body: JSON.stringify(formData)
       });
 
       const data = await resp.json();
 
-      if (!resp.ok) {
+      // Check response using success field
+      if (!data.success) {
         throw new Error(data.error || 'Unknown error occurred');
       }
 
       // Success
       setMsg({
         type: 'success',
-        text: 'Accés concedit! El vostre compte s\'ha creat. Ara podeu iniciar sessió amb les vostres credencials.',
-        user_id: data.user_id
+        text: 'Accés concedit! El vostre compte s\'ha creat. Ara podeu iniciar sessió amb les vostres credencials.'
       });
 
       // Clear form
