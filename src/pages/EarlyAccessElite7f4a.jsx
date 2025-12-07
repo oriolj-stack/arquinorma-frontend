@@ -48,11 +48,36 @@ export default function EarlyAccessElite7f4a() {
         body: JSON.stringify(formData)
       });
 
-      const data = await resp.json();
+      // Check if response is OK and has content
+      if (!resp.ok) {
+        // Try to parse error response
+        let errorMessage = 'Error del servidor';
+        try {
+          const errorData = await resp.json();
+          errorMessage = errorData.error || errorData.message || `Error ${resp.status}: ${resp.statusText}`;
+        } catch (parseError) {
+          // If JSON parsing fails, use status text
+          errorMessage = `Error ${resp.status}: ${resp.statusText || 'Error desconegut'}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse JSON response
+      let data;
+      try {
+        const text = await resp.text();
+        if (!text) {
+          throw new Error('Resposta buida del servidor');
+        }
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        throw new Error('Error al processar la resposta del servidor. Si us plau, torneu-ho a provar.');
+      }
 
       // Check response using success field
-      if (!data.success) {
-        throw new Error(data.error || 'Unknown error occurred');
+      if (!data || data.success !== true) {
+        throw new Error(data?.error || 'Error desconegut durant el registre');
       }
 
       // Success
@@ -65,6 +90,7 @@ export default function EarlyAccessElite7f4a() {
       setForm({ name: '', email: '', password: '', company: '', role: '', notes: '' });
 
     } catch (err) {
+      console.error('Registration error:', err);
       setMsg({
         type: 'error',
         text: err.message || 'No s\'ha pogut crear el compte. Si us plau, torneu-ho a provar.'
