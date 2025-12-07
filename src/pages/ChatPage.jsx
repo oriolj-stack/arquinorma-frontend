@@ -243,7 +243,18 @@ const ChatPage = () => {
    */
   const sendQuestionToBackend = async (question) => {
     try {
-      console.log(`Sending question to ${API_BASE_URL}/api/ask:`, question);
+      // Validate API base URL is configured
+      if (!API_BASE_URL || API_BASE_URL.trim() === '') {
+        const errorMsg = 'Backend API URL is not configured. Please set VITE_BACKEND_URL in Vercel environment variables.';
+        console.error('❌', errorMsg);
+        console.error('Current API_BASE_URL:', API_BASE_URL);
+        console.error('Environment:', import.meta.env.MODE);
+        throw new Error(errorMsg);
+      }
+      
+      const fullUrl = `${API_BASE_URL}/api/ask`;
+      console.log(`Sending question to ${fullUrl}:`, question);
+      console.log('API_BASE_URL:', API_BASE_URL);
       
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -253,12 +264,13 @@ const ChatPage = () => {
         user_id: user?.id || null
       };
       
-      const response = await fetch(`${API_BASE_URL}/api/ask`, {
+      const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
+        credentials: 'include', // Include cookies for CORS
       });
 
       if (!response.ok) {
@@ -293,6 +305,25 @@ const ChatPage = () => {
       
     } catch (error) {
       console.error('Error sending question to backend:', error);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        API_BASE_URL: API_BASE_URL,
+        fullUrl: API_BASE_URL ? `${API_BASE_URL}/api/ask` : 'N/A'
+      });
+      
+      // Handle network/CORS errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        const networkError = `Network error: Cannot connect to backend API.\n\n` +
+          `API URL: ${API_BASE_URL || 'NOT CONFIGURED'}\n` +
+          `This usually means:\n` +
+          `1. VITE_BACKEND_URL is not set in Vercel environment variables, OR\n` +
+          `2. The Cloudflare tunnel is not running, OR\n` +
+          `3. There's a CORS configuration issue.\n\n` +
+          `Check the browser console for more details.`;
+        throw new Error(networkError);
+      }
       
       // Always throw the same fallback error for consistency
       throw new Error('AI_SERVICE_UNAVAILABLE');
