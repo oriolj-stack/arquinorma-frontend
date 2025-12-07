@@ -366,7 +366,8 @@ const LoginPage = () => {
               </button>
             </div>
 
-            {/* Signup Link */}
+            {/* Signup Link - Hidden for private beta */}
+            {/* Temporarily hidden for private beta access
             <div className="text-center pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 No teniu un compte?{' '}
@@ -378,6 +379,7 @@ const LoginPage = () => {
                 </Link>
               </p>
             </div>
+            */}
           </div>
 
           {/* Footer */}
