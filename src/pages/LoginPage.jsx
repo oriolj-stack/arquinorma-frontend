@@ -270,11 +270,15 @@ const LoginPage = () => {
       <div className="max-w-md w-full space-y-8">
         {/* Header Section */}
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-cte-primary">
+          <Link 
+            to="/" 
+            className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-cte-primary hover:bg-cte-primary-dark transition duration-200 cursor-pointer inline-block"
+            title="Tornar a la pàgina principal"
+          >
             <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-          </div>
+          </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             Benvingut a ArquiNorma
           </h2>
