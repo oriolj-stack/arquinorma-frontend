@@ -2,9 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-    <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-    <link rel="apple-touch-icon" href="/favicon.svg?v=2" />
+    <!-- Primary favicon - SVG for modern browsers -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+    <!-- Fallback for older browsers and bookmarks -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg?v=3" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.svg?v=3" />
+    <!-- Shortcut icon for bookmarks -->
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.svg?v=3" />
+    <!-- Apple touch icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg?v=3" />
+    <!-- Prevent Vite default icon from being used -->
+    <link rel="icon" href="/favicon.svg?v=3" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#fbbf24" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ArquiNorma</title>
   </head>
