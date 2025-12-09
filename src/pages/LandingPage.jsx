@@ -158,8 +158,8 @@ const FEATURES = [
 const STEPS = [
   {
     number: '01',
-    title: 'Selecciona el municipi',
-    description: 'Tria el municipi del teu projecte i accedeix a tota la seva normativa urbanística.'
+    title: 'Crea un nou projecte.',
+    description: 'Selecciona el municipi i la tipologia.'
   },
   {
     number: '02',
@@ -169,12 +169,12 @@ const STEPS = [
   {
     number: '03',
     title: 'Rep la resposta',
-    description: 'Obté respostes precises amb referències directes als articles de la normativa.'
+    description: 'Rep una resposta basada únicament en els documents normatius oficials.'
   },
   {
     number: '04',
-    title: 'Verifica i aplica',
-    description: 'Consulta les fonts originals i aplica la informació al teu projecte amb confiança.'
+    title: 'Verifica i consulta',
+    description: 'Clica als enllaços per accedir directament a la pàgina específica dels documents consultats.'
   }
 ];
 
@@ -182,7 +182,16 @@ const STEPS = [
 const SHOW_PRICING = false; // Set to true when ready to show pricing
 const SHOW_TESTIMONIALS = false; // Set to true when ready to show testimonials
 const SHOW_FINAL_CTA = false; // Set to true when ready to show final CTA banner
-const SHOW_PARTNER_LOGOS = false; // Set to true when partners are confirmed
+const SHOW_PARTNER_LOGOS = true; // Set to true when partners are confirmed
+
+// Partner logos - loaded from public/logos folder
+// To add logos: copy files from data/Logos to frontend/public/logos/
+// Then add an object with filename and company name to this array
+const PARTNER_LOGOS = [
+  { filename: 'KM13 Arquitectura i Paisatge.jpg', name: 'KM13 Arquitectura i Paisatge' },
+  { filename: 'Arquimedia.png', name: 'Arquimedia' },
+  // Add more logos: { filename: 'logo.jpg', name: 'Company Name' }
+];
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -343,10 +352,10 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent'
+        scrolled ? 'bg-gray-50/95 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -401,7 +410,7 @@ const LandingPage = () => {
                 onClick={() => scrollToSection('waitlist')}
                 className="px-4 py-2 bg-amber-400 text-gray-900 text-sm font-semibold rounded-lg hover:bg-amber-500 transition-colors shadow-md shadow-amber-400/20"
               >
-                Unir-se a la llista
+                Pre-registre
               </button>
             </div>
           </div>
@@ -411,9 +420,9 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         {/* Background Elements */}
-        <div className="absolute inset-0 bg-gradient-to-b from-amber-50/50 to-white pointer-events-none" />
-        <div className="absolute top-20 right-0 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-100/40 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-50 pointer-events-none" />
+        <div className="absolute top-20 right-0 w-96 h-96 bg-amber-200/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-orange-100/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -427,17 +436,16 @@ const LandingPage = () => {
               
               {/* Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Consulta la normativa urbanística
-                <span className="text-amber-500"> amb IA</span>
+                Tota la normativa al teu abast en segons.
               </h1>
               
               {/* Subheadline */}
               <div className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 space-y-2">
                 <p>
-                  Troba informació a l'instant sobre ordenances, PGM i normativa municipal específica.
+                  Accedeix a +35k Documents normatius de 947 municipis amb només una pregunta.
                 </p>
                 <p className="font-semibold text-gray-900">
-                  El primer assistent normatiu per a arquitectes.
+                  Prova el primer assistent normatiu per a arquitectes.
                 </p>
               </div>
               
@@ -447,7 +455,7 @@ const LandingPage = () => {
                   onClick={() => scrollToSection('waitlist')}
                   className="px-8 py-4 bg-amber-400 text-gray-900 text-lg font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 hover:-translate-y-0.5"
                 >
-                  Unir-se a la llista d'espera
+                  Pre-registre
                 </button>
               </div>
               
@@ -472,8 +480,8 @@ const LandingPage = () => {
             </div>
 
             {/* Hero Visual */}
-            <div className="relative">
-              <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="relative w-full" style={{ maxWidth: '115%' }}>
+              <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
                 {/* Browser Chrome */}
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                   <div className="flex gap-1.5">
@@ -489,38 +497,72 @@ const LandingPage = () => {
                 </div>
                 
                 {/* App Mockup */}
-                <div className="p-6 bg-gray-50">
+                <div className="p-4 bg-gray-50">
                   {/* Chat Interface Mockup */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* User Message */}
                     <div className="flex justify-end">
-                      <div className="bg-amber-400 text-gray-900 rounded-2xl rounded-tr-md px-4 py-3 max-w-xs">
-                        <p className="text-sm">Quina és l'alçada màxima edificable a la zona 13a de Barcelona?</p>
+                      <div className="bg-amber-400 text-gray-900 rounded-2xl rounded-tr-md px-3 py-2 max-w-xs">
+                        <p className="text-sm">Quines limitacions volumètriques tindria la construcció d'un edifici d'habitatges a l'eixample?</p>
                       </div>
                     </div>
                     
                     {/* AI Response */}
                     <div className="flex justify-start">
-                      <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 max-w-sm shadow-sm">
-                        <p className="text-sm text-gray-700 mb-2">
-                          Segons l'article 234 de les Normes Urbanístiques del PGM, l'alçada reguladora màxima a la zona 13a és de <strong>20,75 metres</strong>.
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-3 py-2 max-w-lg shadow-sm">
+                        <div className="space-y-2 text-sm text-gray-700">
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-1">📄 Resum de la normativa aplicable</h4>
+                            <p className="text-gray-600">
+                              Les limitacions volumètriques estan regulades pel Pla General Metropolità. Els plans especials i estudis de detall no poden augmentar la superficie edificable.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-1.5">📖 Articles rellevants</h4>
+                            <div className="space-y-1.5">
+                              <div>
+                                <p className="font-medium text-gray-900">Article 193 - Limitacions</p>
+                                <p className="text-gray-600 italic">
+                                  "Els plans especials i estudis de detall no poden augmentar la superfície edificable, alterar el tipus de zonificació ni augmentar el nombre d'habitatges fixat en la planificació prèvia."
+                                </p>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">Article 191 - Contingut de la normativa</p>
+                                <p className="text-gray-600 mb-1">Estableix els paràmetres volumètrics per a les diferents zones, específicament per a les "Zones d'eixample intensiu":</p>
+                                <ul className="list-disc list-inside text-gray-600 space-y-1 ml-2">
+                                  <li>Edificabilitat neta: 1,50 m2 planta/m2 sòl</li>
+                                  <li>Densitat màxima: 150 habitatges/ha</li>
+                                  <li>Ocupació màxima: 60%</li>
+                                  <li>Alçada màxima: 27,45 m</li>
+                                  <li>Nombre màxim de plantes: Planta Baixa + 7 plantes</li>
+                                </ul>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">Article 192 - Tipus d'ordenació</p>
+                                <p className="text-gray-600 italic">
+                                  "Els plans especials i estudis de detall poden autoritzar l'aplicació de qualsevol altre tipus d'ordenació previst al Pla General."
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold text-gray-900 mb-1">🔗 Enllaços directes als documents</h4>
+                            <div className="flex items-center gap-2 text-xs text-blue-600">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          <span>Font: PGM Barcelona, Art. 234</span>
-                        </div>
+                              <span>Ordenances Edificació - Pàgina 57</span>
                       </div>
                     </div>
                     
-                    {/* Typing Indicator */}
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 rounded-full px-4 py-2">
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}} />
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
+                          <div className="pt-2 border-t border-gray-100">
+                            <h4 className="font-semibold text-gray-900 mb-1">📝 Nota</h4>
+                            <p className="text-xs text-gray-500 italic">
+                              L'assistent només utilitza informació extreta textualment dels documents oficials.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -555,26 +597,8 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Logos / Trust Bar */}
-      {SHOW_PARTNER_LOGOS && (
-        <section className="py-12 bg-gray-50 border-y border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-sm text-gray-500 mb-8">
-              Dissenyat per arquitectes, per a arquitectes de Catalunya
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-60">
-              {/* Placeholder for partner/client logos */}
-              <div className="text-2xl font-bold text-gray-400">COAC</div>
-              <div className="text-2xl font-bold text-gray-400">UPC</div>
-              <div className="text-2xl font-bold text-gray-400">ETSAB</div>
-              <div className="text-2xl font-bold text-gray-400">AMB</div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Features Section */}
-      <section id="features" className="py-20 lg:py-32">
+      <section id="features" className="py-20 lg:py-32 bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -609,6 +633,49 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Logos / Trust Bar */}
+      {SHOW_PARTNER_LOGOS && PARTNER_LOGOS.length > 0 && (
+        <section className="py-12 bg-gray-50 border-y border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-center text-sm text-gray-500 mb-8">
+              Dissenyat per arquitectes, per a arquitectes de Catalunya
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+              {PARTNER_LOGOS.map((logo, index) => (
+                <div 
+                  key={index}
+                  className="relative flex flex-col items-center justify-center group"
+                >
+                  <div className="h-24 max-w-[280px] flex items-center justify-center">
+                    <img 
+                      src={`/logos/${logo.filename}`}
+                      alt={logo.name || `Partner logo ${index + 1}`}
+                      className="h-full w-auto object-contain transition-all duration-300"
+                      style={{ 
+                        filter: 'grayscale(100%) brightness(0.6) contrast(1.1)',
+                        opacity: 0.7
+                      }}
+                      onError={(e) => {
+                        // Hide broken images
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  {/* Company name below logo */}
+                  {logo.name && (
+                    <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <p className="text-sm font-medium text-gray-400 whitespace-nowrap">
+                        {logo.name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 lg:py-32 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -618,7 +685,7 @@ const LandingPage = () => {
               Simple com fer una pregunta
             </h2>
             <p className="text-lg text-gray-600">
-              Sense corba d'aprenentatge. Comença a obtenir respostes en menys d'un minut.
+              Respostes fiables i contrastades, de forma ràpida i effectiva.
             </p>
           </div>
 
@@ -635,7 +702,7 @@ const LandingPage = () => {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-400 text-gray-900 rounded-2xl text-2xl font-bold mb-4 shadow-lg shadow-amber-400/30">
                     {step.number}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
                     {step.title}
                   </h3>
                   <p className="text-gray-600">
@@ -645,20 +712,12 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
-
-          {/* Trust Note */}
-          <div className="mt-12 text-center">
-            <p className="text-base text-amber-500 max-w-2xl mx-auto space-y-1">
-              <span className="block">Les respostes es basen únicament en els documents normatius oficials.</span>
-              <span className="block">Evita al·lucinacions i respostes no vinculants.</span>
-            </p>
-          </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
       {SHOW_TESTIMONIALS && (
-        <section className="py-20 lg:py-32">
+        <section className="py-20 lg:py-32 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <div className="text-center max-w-3xl mx-auto mb-16">
@@ -861,9 +920,16 @@ const LandingPage = () => {
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
               Uneix-te a la llista d'espera
             </h2>
-            <p className="text-lg text-gray-400 mb-8">
+            <p className="text-lg text-gray-400 mb-6">
               Sigues dels primers a provar ArquiNorma. Rebràs accés prioritari quan llancem.
             </p>
+
+            {/* Promotional Message */}
+            <div className="mb-8 p-4 bg-amber-400/10 border border-amber-400/20 rounded-xl">
+              <p className="text-amber-300 font-medium text-center">
+                Apunta't a la llista i rep 1 mes de prova gratuït amb el llançament de l'aplicació.
+              </p>
+            </div>
 
             {/* Form */}
             <form onSubmit={handleWaitingListSubmit} className="space-y-4">
@@ -919,7 +985,7 @@ const LandingPage = () => {
                     Enviant...
                   </div>
                 ) : (
-                  'Unir-me a la llista d\'espera'
+                  'Pre-registre'
                 )}
               </button>
 

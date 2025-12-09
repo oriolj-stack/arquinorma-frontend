@@ -12,17 +12,13 @@ import { Link } from 'react-router-dom';
 
 /**
  * Get the API base URL for beta registration
- * In development: uses production Vercel URL (since API is serverless)
- * In production: uses relative URL (works with Vercel)
+ * In development: uses relative URL (proxied to local backend via Vite)
+ * In production: uses relative URL (works with Vercel serverless function)
  */
 const getApiBaseUrl = () => {
-  // In development, use production URL since API routes are Vercel serverless functions
-  if (import.meta.env.DEV) {
-    // Use production URL for local development
-    // This allows testing the form locally against the deployed API
-    return 'https://arquinorma.cat';
-  }
-  // In production, use relative URL (works with Vercel)
+  // In development, Vite proxy forwards /api to http://localhost:8000
+  // In production, relative URL works with Vercel serverless functions
+  // So we can always use relative URL
   return '';
 };
 
