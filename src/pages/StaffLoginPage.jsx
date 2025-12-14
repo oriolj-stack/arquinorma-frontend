@@ -97,7 +97,7 @@ const StaffLoginPage = () => {
         try {
           console.log('Fetching user profile for ID:', data.user.id);
           const { data: profile, error: profileError } = await supabase
-            .from('users')
+            .from('profiles')
             .select('role')
             .eq('id', data.user.id)
             .single();
@@ -109,7 +109,7 @@ const StaffLoginPage = () => {
             
             // Create a default profile for the user
             const { error: insertError } = await supabase
-              .from('users')
+              .from('profiles')
               .insert({
                 id: data.user.id,
                 email: data.user.email,

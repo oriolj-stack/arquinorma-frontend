@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { env } from '../config/env';
+import AdminHeader from '../components/Admin/AdminHeader';
 import {
   getWaitingListEntries,
   getWaitingListStats,
@@ -363,6 +365,7 @@ const AdminWaitingListPage = () => {
   const navigate = useNavigate();
   
   // State
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState([]);
   const [stats, setStats] = useState(null);
@@ -395,23 +398,79 @@ const AdminWaitingListPage = () => {
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
+      // Check for development user first
+      if (env.app.isDevelopment) {
+        const devUser = localStorage.getItem('dev_staff_user');
+        if (devUser) {
+          const parsedUser = JSON.parse(devUser);
+          setUser(parsedUser);
+          setLoading(false);
+          
+          // In dev mode, try to sign in as the dev user to create a real session
+          // This allows RLS policies to work properly
+          try {
+            // Check if we already have a session
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+              console.log('🔐 No session found, attempting to sign in as dev user...');
+              // Try to sign in with a dev password (you may need to create this user in Supabase)
+              // For now, we'll use the admin client approach
+              console.log('⚠️ Using admin client for dev mode (RLS bypass)');
+            } else {
+              console.log('✅ Existing session found:', session.user.email);
+            }
+          } catch (err) {
+            console.warn('Could not check/create session:', err);
+          }
+          
+          loadData();
+          return;
+        } else {
+          // Set up a default development user
+          const defaultDevUser = {
+            id: 'dev_staff_1',
+            email: 'staff@arquinorma.dev',
+            role: 'staff',
+            full_name: 'Staff User'
+          };
+          localStorage.setItem('dev_staff_user', JSON.stringify(defaultDevUser));
+          setUser(defaultDevUser);
+          setLoading(false);
+          loadData();
+          return;
+        }
+      }
+
+      // Regular Supabase authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/staff/login');
         return;
       }
 
-      // Check if user is staff
-      const { data: profile } = await supabase
+      // Verify staff role
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, email, full_name')
         .eq('id', session.user.id)
         .single();
 
-      if (!profile || !['staff', 'admin'].includes(profile.role)) {
-        navigate('/staff/login');
+      if (profileError) {
+        console.error('Error checking user profile:', profileError);
+        setMessage({ type: 'error', text: 'Error verificant el teu perfil. Torna-ho a provar.' });
+        setLoading(false);
         return;
       }
+
+      if (!['staff', 'admin', 'super_admin'].includes(profile?.role?.toLowerCase())) {
+        console.error('Accés denegat. Es requereixen permisos de personal.');
+        setMessage({ type: 'error', text: 'No tens permisos per accedir a aquesta secció. Es requereixen permisos de staff o admin.' });
+        setLoading(false);
+        return;
+      }
+
+      setUser({ ...session.user, role: profile.role, full_name: profile.full_name, email: profile.email });
+      setLoading(false);
 
       // Load data
       loadData();
@@ -453,19 +512,30 @@ const AdminWaitingListPage = () => {
       filters.dateTo = dateTo + 'T23:59:59';
     }
 
+    // Check if using dev user
+    const isDevUser = env.app.isDevelopment && localStorage.getItem('dev_staff_user');
+
     const result = await getWaitingListEntries({
       page,
       pageSize,
       sortBy,
       sortOrder,
       searchTerm,
-      filters
+      filters,
+      isDevUser: !!isDevUser
     });
 
     if (result.success) {
+      console.log('✅ Successfully loaded entries:', result.entries.length);
       setEntries(result.entries);
       setTotalCount(result.count);
       setTotalPages(result.totalPages);
+    } else {
+      console.error('❌ Error loading entries:', result.error);
+      showMessage('error', result.error || 'Error carregant les entrades');
+      setEntries([]);
+      setTotalCount(0);
+      setTotalPages(0);
     }
   };
 
@@ -473,6 +543,9 @@ const AdminWaitingListPage = () => {
     const result = await getWaitingListStats();
     if (result.success) {
       setStats(result.stats);
+    } else {
+      console.error('Error loading stats:', result.error);
+      // Don't show error message for stats, just log it
     }
   };
 
@@ -683,24 +756,20 @@ const AdminWaitingListPage = () => {
     );
   }
 
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
+      <AdminHeader user={user} />
+      
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{T.title}</h1>
-              <p className="text-sm text-gray-500 mt-1">{T.subtitle}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/admin')}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                ← Tornar
-              </button>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{T.title}</h1>
+            <p className="text-sm text-gray-500 mt-1">{T.subtitle}</p>
           </div>
         </div>
       </div>

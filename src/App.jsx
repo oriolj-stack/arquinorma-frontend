@@ -20,6 +20,8 @@ import StaffLoginPage from '/src/pages/StaffLoginPage';
 import AdminUploadPage from '/src/pages/AdminUploadPage';
 import AdminListPage from '/src/pages/AdminListPage';
 import AdminWaitingListPage from '/src/pages/AdminWaitingListPage';
+import AdminBetaConfirmedPage from '/src/pages/AdminBetaConfirmedPage';
+import AdminBetaCandidatesPage from '/src/pages/AdminBetaCandidatesPage';
 import EarlyAccessElite7f4a from '/src/pages/EarlyAccessElite7f4a';
 
 /**
@@ -368,6 +370,8 @@ function App() {
         setUser(null);
         setAuthError(null);
         console.log('User signed out successfully');
+        // Redirect to landing page after successful logout
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Unexpected error during logout:', error);
@@ -595,6 +599,14 @@ function App() {
             <Route 
               path="/admin/waiting-list" 
               element={<AdminWaitingListPage />} 
+            />
+            <Route 
+              path="/admin/beta/confirmed" 
+              element={<AdminBetaConfirmedPage />} 
+            />
+            <Route 
+              path="/admin/beta/candidates" 
+              element={<AdminBetaCandidatesPage />} 
             />
 
             {/* 

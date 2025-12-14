@@ -6,6 +6,8 @@
  */
 
 import { supabase } from '../supabaseClient';
+import { getAdminSupabase } from './adminSupabaseClient';
+import { env } from '../config/env';
 
 /**
  * Validates email format
@@ -172,11 +174,68 @@ export const getWaitingListEntries = async (options = {}) => {
     sortBy = 'created_at',
     sortOrder = 'desc',
     searchTerm = '',
-    filters = {}
+    filters = {},
+    isDevUser = false // Pass this from the component if using dev user
   } = options;
 
   try {
-    let query = supabase
+    console.log('🔍 Fetching waiting list entries with options:', { page, pageSize, sortBy, sortOrder, searchTerm, filters, isDevUser });
+    
+    // Use admin client in dev mode if using dev user (bypasses RLS)
+    let client = supabase;
+    let usingAdminClient = false;
+    
+    if (isDevUser && env.app.isDevelopment) {
+      const adminClient = getAdminSupabase(true);
+      if (adminClient) {
+        client = adminClient;
+        usingAdminClient = true;
+        console.log('🔑 Using admin Supabase client (bypasses RLS)');
+      } else {
+        console.warn('⚠️ Admin client not available, using regular client (may fail due to RLS)');
+      }
+    }
+    
+    // First, let's check if we can access the table at all
+    console.log('🔍 Testing table access with client:', usingAdminClient ? 'ADMIN (bypasses RLS)' : 'REGULAR (respects RLS)');
+    const { data: testData, error: testError } = await client
+      .from('waiting_list')
+      .select('id')
+      .limit(10); // Get more to see if data exists
+    
+    console.log('🔍 Test query result:', { 
+      testData, 
+      testError, 
+      usingAdminClient,
+      dataLength: testData?.length || 0,
+      errorCode: testError?.code,
+      errorMessage: testError?.message,
+      errorHint: testError?.hint
+    });
+    
+    if (testError) {
+      console.error('❌ Cannot access waiting_list table:', testError);
+      console.error('Error code:', testError.code);
+      console.error('Error message:', testError.message);
+      console.error('Error hint:', testError.hint);
+      
+      // If using regular client and getting RLS error, suggest using admin client
+      if (testError.code === '42501' && !usingAdminClient && isDevUser) {
+        console.error('💡 Suggestion: Set VITE_SUPABASE_SERVICE_ROLE_KEY in .env.local to bypass RLS in dev mode');
+      }
+      
+      return { success: false, error: `Cannot access waiting_list table: ${testError.message} (Code: ${testError.code})`, entries: [], count: 0 };
+    }
+    
+    // If no error but also no data, the table might be empty or RLS is silently blocking
+    if (!testError && (!testData || testData.length === 0)) {
+      console.warn('⚠️ Query succeeded but returned no data. This could mean:');
+      console.warn('  1. The table is empty');
+      console.warn('  2. RLS is silently filtering out all rows (even with admin client)');
+      console.warn('  3. The table name or schema is incorrect');
+    }
+
+    let query = client
       .from('waiting_list')
       .select('*', { count: 'exact' });
 
@@ -212,11 +271,21 @@ export const getWaitingListEntries = async (options = {}) => {
     const to = from + pageSize - 1;
     query = query.range(from, to);
 
+    console.log('🔍 Executing query...');
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching waiting list:', error);
-      return { success: false, error: error.message, entries: [], count: 0 };
+      console.error('❌ Error fetching waiting list:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error hint:', error.hint);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return { success: false, error: `${error.message} (Code: ${error.code})`, entries: [], count: 0 };
+    }
+
+    console.log(`✅ Loaded ${data?.length || 0} waiting list entries (total: ${count || 0})`);
+    if (data && data.length > 0) {
+      console.log('📋 Sample entry:', data[0]);
     }
 
     return {
@@ -228,7 +297,7 @@ export const getWaitingListEntries = async (options = {}) => {
       totalPages: Math.ceil((count || 0) / pageSize)
     };
   } catch (err) {
-    console.error('Error in getWaitingListEntries:', err);
+    console.error('❌ Exception in getWaitingListEntries:', err);
     return { success: false, error: err.message, entries: [], count: 0 };
   }
 };

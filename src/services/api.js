@@ -31,11 +31,27 @@ export const getApiBaseUrl = () => {
  * Get authentication headers for API requests
  */
 export const getAuthHeaders = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  
   const headers = {
     'Content-Type': 'application/json',
   };
+  
+  // In dev mode, check if we're using a dev user and use dev token
+  if (env.app.isDevelopment) {
+    const devUser = localStorage.getItem('dev_staff_user');
+    if (devUser) {
+      const parsedUser = JSON.parse(devUser);
+      // Use staff dev token for staff users, admin dev token for admin users
+      const devToken = parsedUser.role === 'admin' || parsedUser.role === 'super_admin'
+        ? 'admin_dev_token_123'
+        : 'staff_dev_token_123';
+      headers['Authorization'] = `Bearer ${devToken}`;
+      console.log('🔑 Using dev token for API authentication:', devToken);
+      return headers;
+    }
+  }
+  
+  // Regular Supabase session
+  const { data: { session } } = await supabase.auth.getSession();
   
   if (session?.access_token) {
     headers['Authorization'] = `Bearer ${session.access_token}`;

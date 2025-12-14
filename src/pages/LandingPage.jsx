@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { submitWaitingListEntry, validateWaitingListForm } from '../services/waitingListService';
 
@@ -238,7 +238,6 @@ const PARTNER_LOGOS = [
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   
   // Waiting list form state
   const [formData, setFormData] = useState({
@@ -332,18 +331,6 @@ const LandingPage = () => {
     // Generate random initials on page load
     setRandomInitials(generateRandomInitials());
   }, []);
-
-  // Handle hash navigation (e.g., /#faq from pricing page)
-  useEffect(() => {
-    if (location.hash) {
-      // Remove the # from the hash
-      const sectionId = location.hash.substring(1);
-      // Small delay to ensure page is rendered
-      setTimeout(() => {
-        scrollToSection(sectionId);
-      }, 100);
-    }
-  }, [location.hash]);
 
   // Handle waiting list form submission
   const handleWaitingListSubmit = async (e) => {
