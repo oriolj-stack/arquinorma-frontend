@@ -536,11 +536,7 @@ function App() {
             */}
             <Route 
               path="/pricing" 
-              element={
-                <ProtectedRoute user={user}>
-                  <PricingPage />
-                </ProtectedRoute>
-              } 
+              element={<PricingPage />} 
             />
 
             {/* 

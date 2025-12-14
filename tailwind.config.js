@@ -10,6 +10,9 @@ export default {
         'cte-primary': '#FBBF24',       // Amber 400
         'cte-primary-dark': '#F59E0B',  // Darker amber (for hover/focus)
         'cte-primary-light': '#FCD34D', // Lighter amber (accent)
+      },
+      fontFamily: {
+        'title': ['Neue Haas Unica', 'sans-serif'],
       }
     },
   },

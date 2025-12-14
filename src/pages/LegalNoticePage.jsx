@@ -330,7 +330,7 @@ const LegalNoticePage = () => {
                 <span className="text-xl font-bold">ArquiNorma</span>
               </div>
               <p className="text-gray-400 text-sm">
-                L'assistent d'IA que ajuda els arquitectes a consultar la normativa urbanística de Catalunya.
+                El primer assistent normatiu per a arquitectes.
               </p>
             </div>
             <div>

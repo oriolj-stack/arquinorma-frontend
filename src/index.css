@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Neue Haas Unica font - Load from local files or font service */
+@font-face {
+  font-family: 'Neue Haas Unica';
+  font-weight: 700;
+  font-style: normal;
+  src: local('Neue Haas Unica Bold'), local('NeueHaasUnica-Bold');
+  /* If font files are in public/fonts, uncomment and adjust:
+  src: url('/fonts/NeueHaasUnica-Bold.woff2') format('woff2'),
+       url('/fonts/NeueHaasUnica-Bold.woff') format('woff');
+  */
+}
+
 /* Custom styles for ArquiNorma */
 body {
   margin: 0;

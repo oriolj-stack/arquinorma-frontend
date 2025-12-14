@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { submitWaitingListEntry, validateWaitingListForm } from '../services/waitingListService';
 
@@ -158,23 +158,66 @@ const FEATURES = [
 const STEPS = [
   {
     number: '01',
-    title: 'Crea un nou projecte.',
-    description: 'Selecciona el municipi i la tipologia.'
+    title: 'Formula la consulta',
+    description: 'Preguntes en llenguatge natural sobre CTE, urbanisme, compatibilitat d\'usos, etc.'
   },
   {
     number: '02',
-    title: 'Fes la teva pregunta',
-    description: 'Escriu la teva consulta en llenguatge natural, com si parlessis amb un expert.'
+    title: 'L\'assistent analitza tota la base documental',
+    description: 'Revisa municipis, CTE, decrets, planejament, PDFs, fitxes i normatives.'
   },
   {
     number: '03',
-    title: 'Rep la resposta',
-    description: 'Rep una resposta basada únicament en els documents normatius oficials.'
+    title: 'Rep una resposta clara i fiable',
+    description: 'Justificació, article, taules i referències amb enllaç directe'
+  }
+];
+
+// FAQ data - adapted from Factorial's FAQ structure
+const FAQ_ITEMS = [
+  {
+    question: 'Què és ArquiNorma?',
+    answer: 'ArquiNorma és el primer assistent normatiu d\'IA dissenyat específicament per a arquitectes. Et permet consultar normativa urbanística, CTE i documentació de projectes de forma immediata i contextual, estalviant hores de recerca manual.'
   },
   {
-    number: '04',
-    title: 'Verifica i consulta',
-    description: 'Clica als enllaços per accedir directament a la pàgina específica dels documents consultats.'
+    question: 'Com funciona ArquiNorma?',
+    answer: 'Només has de fer una pregunta en llenguatge natural sobre qualsevol aspecte normatiu. L\'assistent analitza automàticament tota la base documental (municipis, CTE, decrets, planejament, PDFs) i et proporciona una resposta clara, fiable i enllaçada amb referències directes als documents oficials.'
+  },
+  {
+    question: 'Quina normativa cobreix ArquiNorma?',
+    answer: 'ArquiNorma cobreix la normativa de 947 municipis de Catalunya, incloent ordenances urbanístiques, el Codi Tècnic de l\'Edificació (CTE), decrets, planejament urbanístic. En total més de 35.000 documents normatius actualitzats regularment.'
+  },
+  {
+    question: 'És fiable la informació que proporciona?',
+    answer: 'Sí. ArquiNorma només utilitza informació extreta textualment dels documents oficials publicats. Totes les respostes inclouen referències directes als articles, taules i pàgines específiques dels documents consultats, permetent-te verificar cada resposta.'
+  },
+  {
+    question: 'Quants projectes puc gestionar?',
+    answer: 'Depèn del teu pla. El pla Bàsic inclou 5 projectes actius, el Professional 25 projectes, i el pla Estudi projectes il·limitats. Tots els plans inclouen preguntes il·limitades a l\'IA.'
+  },
+  {
+    question: 'Puc pujar els meus propis documents PDF?',
+    answer: 'Sí, els plans Professional i Estudi inclouen pujades de PDF il·limitades. Això et permet consultar normativa personalitzada o documents específics del teu projecte juntament amb la base de dades general.'
+  },
+  {
+    question: 'Com s\'actualitza la normativa?',
+    answer: 'Actualitzem automàticament la base de dades quan hi ha canvis oficials en la normativa. Revisem setmanalment les actualitzacions dels municipis i organismes oficials per assegurar que sempre tens accés a la informació més recent.'
+  },
+  {
+    question: 'Hi ha un període de prova gratuïta?',
+    answer: 'Sí! Tots els nous usuaris reben 1 mes de prova gratuïta al registrar-se a la llista d\'espera. No cal targeta de crèdit i pots cancel·lar quan vulguis sense cap compromís.'
+  },
+  {
+    question: 'Puc cancel·lar la meva subscripció en qualsevol moment?',
+    answer: 'Absolutament. Pots cancel·lar la teva subscripció en qualsevol moment sense cap penalització. No hi ha compromisos a llarg termini ni costos ocults.'
+  },
+  {
+    question: 'Les meves dades estan segures?',
+    answer: 'Sí, la seguretat de les teves dades és una prioritat. Complim amb el GDPR i utilitzem xifratge de dades. Mai compartim la teva informació amb tercers i pots sol·licitar l\'eliminació de les teves dades en qualsevol moment.'
+  },
+  {
+    question: 'Funciona en dispositius mòbils?',
+    answer: 'Sí, ArquiNorma està optimitzat per funcionar perfectament en ordinadors, tauletes i mòbils. Pots accedir a la teva informació normativa des de qualsevol dispositiu, en qualsevol moment.'
   }
 ];
 
@@ -195,6 +238,7 @@ const PARTNER_LOGOS = [
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Waiting list form state
   const [formData, setFormData] = useState({
@@ -214,6 +258,9 @@ const LandingPage = () => {
   
   // Random initials for social proof
   const [randomInitials, setRandomInitials] = useState(['MG', 'JP', 'AM', 'RS']);
+  
+  // FAQ accordion state
+  const [openFAQ, setOpenFAQ] = useState(null);
 
   // Generate random initials (2 letters) using common Catalan letters
   const generateRandomInitials = () => {
@@ -285,6 +332,18 @@ const LandingPage = () => {
     // Generate random initials on page load
     setRandomInitials(generateRandomInitials());
   }, []);
+
+  // Handle hash navigation (e.g., /#faq from pricing page)
+  useEffect(() => {
+    if (location.hash) {
+      // Remove the # from the hash
+      const sectionId = location.hash.substring(1);
+      // Small delay to ensure page is rendered
+      setTimeout(() => {
+        scrollToSection(sectionId);
+      }, 100);
+    }
+  }, [location.hash]);
 
   // Handle waiting list form submission
   const handleWaitingListSubmit = async (e) => {
@@ -388,14 +447,18 @@ const LandingPage = () => {
               >
                 Com funciona
               </button>
-              {SHOW_PRICING && (
-                <button 
-                  onClick={() => scrollToSection('pricing')} 
-                  className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
-                >
-                  Preus
-                </button>
-              )}
+              <button 
+                onClick={() => scrollToSection('faq')} 
+                className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                FAQ
+              </button>
+              <Link 
+                to="/pricing" 
+                className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
+              >
+                Preus
+              </Link>
             </div>
 
             {/* CTA Buttons */}
@@ -410,7 +473,7 @@ const LandingPage = () => {
                 onClick={() => scrollToSection('waitlist')}
                 className="px-4 py-2 bg-amber-400 text-gray-900 text-sm font-semibold rounded-lg hover:bg-amber-500 transition-colors shadow-md shadow-amber-400/20"
               >
-                Pre-registre
+                Sol·licita Accés
               </button>
             </div>
           </div>
@@ -435,8 +498,8 @@ const LandingPage = () => {
               </div>
               
               {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Tota la normativa al teu abast en segons.
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-title text-gray-900 leading-tight mb-6">
+                Estalvia temps buscant normativa. Tota la informació en segons.
               </h1>
               
               {/* Subheadline */}
@@ -455,7 +518,7 @@ const LandingPage = () => {
                   onClick={() => scrollToSection('waitlist')}
                   className="px-8 py-4 bg-amber-400 text-gray-900 text-lg font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40 hover:-translate-y-0.5"
                 >
-                  Pre-registre
+                  Prova-ho ara
                 </button>
               </div>
               
@@ -474,7 +537,7 @@ const LandingPage = () => {
                 <div className="text-sm text-gray-600">
                   <span className="font-semibold text-gray-900">
                     {waitingListCount !== null ? `+${waitingListCount}` : '+10'}
-                  </span> arquitectes a la llista d'espera
+                  </span> arquitectes esperen a provar-ho
                 </div>
               </div>
             </div>
@@ -503,7 +566,7 @@ const LandingPage = () => {
                     {/* User Message */}
                     <div className="flex justify-end">
                       <div className="bg-amber-400 text-gray-900 rounded-2xl rounded-tr-md px-3 py-2 max-w-xs">
-                        <p className="text-sm">Quines limitacions volumètriques tindria la construcció d'un edifici d'habitatges a l'eixample?</p>
+                        <p className="text-sm">Quines limitacions volumètriques te la construcció d'un edifici d'habitatges a l'eixample?</p>
                       </div>
                     </div>
                     
@@ -602,7 +665,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
               Tot el que necessites per treballar més ràpid
             </h2>
             <p className="text-lg text-gray-600">
@@ -621,7 +684,7 @@ const LandingPage = () => {
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 mb-4 group-hover:bg-amber-400 group-hover:text-white transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold font-title text-gray-900 mb-2">
                   {feature.title}
                 </h3>
                 <p className="text-gray-600">
@@ -681,16 +744,16 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Simple com fer una pregunta
+            <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
+              Cansat de buscar normativa?
             </h2>
             <p className="text-lg text-gray-600">
-              Respostes fiables i contrastades, de forma ràpida i effectiva.
+              Troba informació fiable i contrastada, de forma ràpida i efectiva.
             </p>
           </div>
 
           {/* Steps */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {STEPS.map((step, index) => (
               <div key={index} className="relative">
                 {/* Connector Line */}
@@ -702,7 +765,7 @@ const LandingPage = () => {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-400 text-gray-900 rounded-2xl text-2xl font-bold mb-4 shadow-lg shadow-amber-400/30">
                     {step.number}
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold font-title text-gray-900 mb-2">
                     {step.title}
                   </h3>
                   <p className="text-gray-600">
@@ -721,7 +784,7 @@ const LandingPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Section Header */}
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
                 El que diuen els nostres usuaris
               </h2>
               <p className="text-lg text-gray-600">
@@ -767,7 +830,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
               Plans simples, sense sorpreses
             </h2>
             <p className="text-lg text-gray-600">
@@ -796,7 +859,7 @@ const LandingPage = () => {
                 )}
 
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{tier.name}</h3>
+                  <h3 className="text-xl font-bold font-title text-gray-900 mb-2">{tier.name}</h3>
                   <p className="text-sm text-gray-500 mb-4">{tier.description}</p>
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-bold text-gray-900">€{tier.price.toFixed(2)}</span>
@@ -844,7 +907,7 @@ const LandingPage = () => {
 
           {/* Comparison Table */}
           <div className="mt-16 max-w-5xl mx-auto">
-            <h3 className="text-xl font-bold text-gray-900 text-center mb-8">
+            <h3 className="text-xl font-bold font-title text-gray-900 text-center mb-8">
               Comparació detallada
             </h3>
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -917,17 +980,17 @@ const LandingPage = () => {
               Accés anticipat disponible
             </div>
             
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Uneix-te a la llista d'espera
+            <h2 className="text-3xl sm:text-4xl font-bold font-title text-white mb-4">
+              Prova-ho abans que la resta
             </h2>
-            <p className="text-lg text-gray-400 mb-6">
-              Sigues dels primers a provar ArquiNorma. Rebràs accés prioritari quan llancem.
+            <p className="text-lg text-gray-400 mb-6 hidden">
+              Uneix-te a la llista d'espera. Rebràs accés prioritari quan llancem.
             </p>
 
             {/* Promotional Message */}
             <div className="mb-8 p-4 bg-amber-400/10 border border-amber-400/20 rounded-xl">
               <p className="text-amber-300 font-medium text-center">
-                Apunta't a la llista i rep 1 mes de prova gratuït amb el llançament de l'aplicació.
+                Apunta't i rep 1 mes de prova gratuït.
               </p>
             </div>
 
@@ -985,7 +1048,7 @@ const LandingPage = () => {
                     Enviant...
                   </div>
                 ) : (
-                  'Pre-registre'
+                  'Sol·licita Accés'
                 )}
               </button>
 
@@ -1018,6 +1081,70 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 lg:py-32 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
+              Encara tens dubtes sobre el nostre assistent?
+            </h2>
+            <p className="text-lg text-gray-600">
+              Respostes a les preguntes més comunes sobre ArquiNorma
+            </p>
+          </div>
+
+          {/* FAQ Accordion */}
+          <div className="space-y-4">
+            {FAQ_ITEMS.map((faq, index) => (
+              <div
+                key={index}
+                className="border border-gray-200 rounded-xl overflow-hidden transition-all hover:border-amber-300 hover:shadow-md"
+              >
+                <button
+                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                  className="w-full px-6 py-5 text-left flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-lg font-semibold text-gray-900 pr-8">
+                    {faq.question}
+                  </span>
+                  <svg
+                    className={`w-5 h-5 text-amber-600 flex-shrink-0 transition-transform ${
+                      openFAQ === index ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openFAQ === index && (
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <p className="text-gray-700 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* CTA after FAQ */}
+          <div className="mt-12 text-center">
+            <p className="text-gray-600 mb-6">
+              Encara tens preguntes? Contacta'ns i et respondrem amb gust.
+            </p>
+            <button
+              onClick={() => scrollToSection('waitlist')}
+              className="px-8 py-4 bg-amber-400 text-gray-900 text-lg font-semibold rounded-xl hover:bg-amber-500 transition-all shadow-lg shadow-amber-400/30 hover:shadow-xl hover:shadow-amber-400/40"
+            >
+              Prova-ho gratuïtament
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA Section */}
       {SHOW_FINAL_CTA && (
         <section className="py-20 lg:py-32">
@@ -1028,7 +1155,7 @@ const LandingPage = () => {
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-200/50 rounded-full blur-3xl" />
               
               <div className="relative">
-                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl sm:text-4xl font-bold font-title text-gray-900 mb-4">
                   Preparat per revolucionar la teva manera de treballar?
                 </h2>
                 <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -1049,7 +1176,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-5 gap-8 mb-8">
             {/* Brand */}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
@@ -1061,7 +1188,7 @@ const LandingPage = () => {
                 <span className="text-xl font-bold">ArquiNorma</span>
               </div>
               <p className="text-gray-400 max-w-sm">
-                L'assistent d'IA que ajuda els arquitectes a consultar la normativa urbanística de Catalunya.
+                El primer assistent normatiu per a arquitectes.
               </p>
             </div>
 
@@ -1070,9 +1197,7 @@ const LandingPage = () => {
               <h4 className="font-semibold mb-4">Producte</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Funcionalitats</button></li>
-                {SHOW_PRICING && (
-                  <li><button onClick={() => scrollToSection('pricing')} className="hover:text-white transition-colors">Preus</button></li>
-                )}
+                <li><Link to="/pricing" className="hover:text-white transition-colors">Preus</Link></li>
                 <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition-colors">Com funciona</button></li>
               </ul>
             </div>
@@ -1084,7 +1209,15 @@ const LandingPage = () => {
                 <li><Link to="/privacy" className="hover:text-white transition-colors">Política de privacitat</Link></li>
                 <li><Link to="/terms" className="hover:text-white transition-colors">Termes d'ús</Link></li>
                 <li><Link to="/legal" className="hover:text-white transition-colors">Avís legal</Link></li>
-                <li><a href="mailto:suport@arquinorma.cat" className="hover:text-white transition-colors">Suport</a></li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold mb-4">Contacte</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="mailto:arquinorma.cat@gmail.com" className="hover:text-white transition-colors">Privacitat</a></li>
+                <li><a href="mailto:arquinorma.cat@gmail.com" className="hover:text-white transition-colors">Suport</a></li>
               </ul>
             </div>
           </div>
@@ -1095,18 +1228,13 @@ const LandingPage = () => {
               © {new Date().getFullYear()} ArquiNorma. Tots els drets reservats.
             </p>
             <div className="flex items-center gap-4">
-              {/* Social Links Placeholder */}
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+              {/* Social Links */}
+              <a href="mailto:arquinorma.cat@gmail.com" className="text-gray-400 hover:text-white transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://www.linkedin.com/company/arquinorma" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
                 </svg>
