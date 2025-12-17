@@ -14,8 +14,14 @@ import { env } from './config/env';
 /**
  * Initialize Stripe instance
  * This is a promise that resolves to the Stripe object
+ * Initialize immediately if key is available
  */
 let stripePromise = null;
+
+// Initialize Stripe promise if key is available
+if (env.stripe?.publicKey) {
+  stripePromise = loadStripe(env.stripe.publicKey);
+}
 
 /**
  * Gets the Stripe instance, initializing it if necessary
@@ -23,7 +29,7 @@ let stripePromise = null;
  * @returns {Promise<Stripe|null>} Promise that resolves to Stripe instance
  */
 const getStripe = () => {
-  if (!stripePromise && env.stripe.publicKey) {
+  if (!stripePromise && env.stripe?.publicKey) {
     stripePromise = loadStripe(env.stripe.publicKey);
   }
   return stripePromise;

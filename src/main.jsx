@@ -67,11 +67,18 @@ const root = ReactDOM.createRoot(rootElement);
  * - Unexpected side effects
  * - Legacy context API usage
  */
+// Conditionally wrap with Stripe Elements only if Stripe is configured
+const AppWrapper = stripePromise ? (
+  <Elements stripe={stripePromise}>
+    <App />
+  </Elements>
+) : (
+  <App />
+);
+
 root.render(
   <React.StrictMode>
-    <Elements stripe={stripePromise}>
-      <App />
-    </Elements>
+    {AppWrapper}
   </React.StrictMode>
 );
 
