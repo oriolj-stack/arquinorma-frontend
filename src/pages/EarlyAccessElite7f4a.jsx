@@ -84,12 +84,22 @@ export default function EarlyAccessElite7f4a() {
         // Try to parse error response
         let errorMessage = 'Error del servidor';
         try {
-          const errorData = await resp.json();
-          errorMessage = errorData.error || errorData.message || `Error ${resp.status}: ${resp.statusText}`;
+          const text = await resp.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.error || errorData.message || `Error ${resp.status}: ${resp.statusText}`;
+            // Add details if available
+            if (errorData.details) {
+              errorMessage += ` (${errorData.details})`;
+            }
+          } else {
+            errorMessage = `Error ${resp.status}: ${resp.statusText || 'Error desconegut'}`;
+          }
         } catch (parseError) {
           // If JSON parsing fails, use status text
           errorMessage = `Error ${resp.status}: ${resp.statusText || 'Error desconegut'}`;
         }
+        console.error('API error response:', { status: resp.status, error: errorMessage });
         throw new Error(errorMessage);
       }
 
