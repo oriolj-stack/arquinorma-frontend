@@ -98,8 +98,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
     }
 
-    // 1) Create user with service role
-    console.log('Creating user with email:', email);
+    // 1) Check if user already exists in beta_registrations
+    console.log('Checking if user already exists in beta_registrations:', email);
+    const { data: existingReg, error: checkError } = await supabaseAdmin
+      .from('beta_registrations')
+      .select('id, user_id, email')
+      .eq('email', email.trim())
+      .maybeSingle();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('Error checking existing registration:', checkError);
+      return res.status(500).json({ 
+        success: false,
+        error: 'Error checking existing registration'
+      });
+    }
+
+    if (existingReg) {
+      console.log('User already registered in beta_registrations');
+      return res.status(400).json({ 
+        success: false,
+        error: 'Aquest correu electrònic ja està registrat'
+      });
+    }
+
+    // 2) Try to create user (or get existing user ID)
+    console.log('Attempting to create user with email:', email);
+    let user_id: string | null = null;
+    
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: email.trim(),
       password,
@@ -115,13 +141,51 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (createError) {
       console.error('createUser error:', createError);
-      return res.status(400).json({ 
-        success: false,
-        error: createError.message || 'Failed to create user'
-      });
-    }
-
-    if (!userData?.user?.id) {
+      const errorMsg = createError.message?.toLowerCase() || '';
+      
+      // Check if error is because user already exists
+      if (errorMsg.includes('already') || 
+          errorMsg.includes('exists') ||
+          errorMsg.includes('registered') ||
+          errorMsg.includes('duplicate')) {
+        console.log('User already exists, attempting to find user ID');
+        
+        // User exists - we need to find their ID
+        // List users and find by email (unfortunately Supabase doesn't have getByEmail)
+        const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (listError) {
+          console.error('Error listing users:', listError);
+          return res.status(500).json({ 
+            success: false,
+            error: 'Error checking existing user'
+          });
+        }
+        
+        const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+        if (existingUser) {
+          user_id = existingUser.id;
+          console.log('Found existing user ID:', user_id);
+        } else {
+          // User exists but we can't find them - this shouldn't happen
+          console.error('User exists but could not find in list');
+          return res.status(400).json({ 
+            success: false,
+            error: 'Aquest correu electrònic ja està registrat'
+          });
+        }
+      } else {
+        // Other error creating user
+        return res.status(400).json({ 
+          success: false,
+          error: createError.message || 'Failed to create user'
+        });
+      }
+    } else if (userData?.user?.id) {
+      // User created successfully
+      user_id = userData.user.id;
+      console.log('User created successfully with ID:', user_id);
+    } else {
       console.error('No user ID returned from createUser');
       return res.status(500).json({ 
         success: false,
@@ -129,11 +193,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const user_id = userData.user.id;
-    console.log('User created successfully with ID:', user_id);
+    if (!user_id) {
+      console.error('No user_id available for beta registration');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Unable to get or create user ID'
+      });
+    }
 
-    // 2) Insert into beta_registrations
-    console.log('Inserting into beta_registrations table');
+    // 4) Insert into beta_registrations
+    console.log('Inserting into beta_registrations table for user_id:', user_id);
     const betaRegData: any = {
       email: email.trim(),
       user_id,
@@ -149,27 +218,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (role) betaRegData.role = role;
     if (additional_metadata) betaRegData.additional_metadata = additional_metadata;
     
-    const { error: insertError } = await supabaseAdmin
+    console.log('Beta registration data:', JSON.stringify(betaRegData, null, 2));
+    
+    const { data: insertData, error: insertError } = await supabaseAdmin
       .from('beta_registrations')
-      .insert([betaRegData]);
+      .insert([betaRegData])
+      .select();
 
     if (insertError) {
       console.error('insert error:', insertError);
-      // Optionally delete the created user if insertion fails
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(user_id);
-        console.log('Deleted user after registration insert failed');
-      } catch (deleteError) {
-        console.error('Failed to delete user after registration insert failed:', deleteError);
-      }
+      console.error('insert error details:', JSON.stringify(insertError, null, 2));
       return res.status(500).json({ 
         success: false,
-        error: insertError.message || 'Failed to register beta access'
+        error: insertError.message || 'Failed to register beta access',
+        details: insertError.details || insertError.hint || ''
       });
     }
 
-    console.log('Beta registration completed successfully');
-    return res.status(201).json({ success: true });
+    console.log('Beta registration completed successfully:', insertData);
+    return res.status(201).json({ success: true, userId: user_id });
 
   } catch (err: any) {
     console.error('Beta registration error:', err);
