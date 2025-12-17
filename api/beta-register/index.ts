@@ -4,11 +4,23 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Debug logging (will appear in Vercel function logs)
+console.log('Environment variables check:', {
+  hasUrl: !!SUPABASE_URL,
+  hasKey: !!SUPABASE_SERVICE_ROLE_KEY,
+  urlLength: SUPABASE_URL?.length || 0,
+  keyLength: SUPABASE_SERVICE_ROLE_KEY?.length || 0,
+  urlPreview: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'NOT SET',
+  keyPreview: SUPABASE_SERVICE_ROLE_KEY ? `${SUPABASE_SERVICE_ROLE_KEY.substring(0, 20)}...` : 'NOT SET',
+  allEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE')).join(', ')
+});
+
 // Validate environment variables
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error('Missing environment variables:', {
     hasUrl: !!SUPABASE_URL,
-    hasKey: !!SUPABASE_SERVICE_ROLE_KEY
+    hasKey: !!SUPABASE_SERVICE_ROLE_KEY,
+    availableKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
   });
   // Don't throw here - handle in the handler to return proper JSON response
 }
@@ -69,9 +81,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Check if Supabase client is initialized
     if (!supabaseAdmin) {
       console.error('Supabase client not initialized - missing environment variables');
+      console.error('Current env state:', {
+        SUPABASE_URL: SUPABASE_URL ? 'SET' : 'NOT SET',
+        SUPABASE_SERVICE_ROLE_KEY: SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
+        allSupabaseKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
+      });
       return res.status(500).json({ 
         success: false,
-        error: 'Server configuration error: Missing Supabase credentials'
+        error: 'Server configuration error: Missing Supabase credentials',
+        debug: {
+          hasUrl: !!SUPABASE_URL,
+          hasKey: !!SUPABASE_SERVICE_ROLE_KEY,
+          availableKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
+        }
       });
     }
 
