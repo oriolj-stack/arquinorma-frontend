@@ -19,12 +19,12 @@ import { submitBetaTesterEmail, validateEmail } from '../services/betaTestersSer
 
 // Pricing tiers configuration - matching LandingPage data
 const PRICING_TIERS = [
-  {
-    id: 'basic',
+    {
+      id: 'basic',
     name: 'Bàsic',
-    price: 5.99,
+      price: 5.99,
     description: 'Per a projectes individuals',
-    features: [
+      features: [
       { name: 'Projectes actius', value: '5', included: true },
       { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
       { name: 'Documents personalitzats', value: null, included: false },
@@ -36,14 +36,14 @@ const PRICING_TIERS = [
     ],
     cta: 'Començar amb Bàsic',
     popular: false
-  },
-  {
-    id: 'pro',
+    },
+    {
+      id: 'pro',
     name: 'Professional',
-    price: 14.99,
+      price: 14.99,
     description: 'Per a professionals exigents',
     popular: true,
-    features: [
+      features: [
       { name: 'Projectes actius', value: '15', included: true },
       { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
       { name: 'Documents personalitzats', value: '20/mes', included: true },
@@ -54,13 +54,13 @@ const PRICING_TIERS = [
       { name: 'Area privada d\'estudi', value: null, included: false },
     ],
     cta: 'Començar amb Pro'
-  },
-  {
-    id: 'studio',
+    },
+    {
+      id: 'studio',
     name: 'Estudi',
-    price: 49.00,
+      price: 49.00,
     description: 'Per a equips i estudis',
-    features: [
+      features: [
       { name: 'Projectes actius', value: 'Il·limitats', included: true },
       { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
       { name: 'Documents personalitzats', value: 'Il·limitats', included: true },
@@ -175,7 +175,7 @@ const PricingPage = () => {
       if (!responseData.url) {
         throw new Error('No s\'ha rebut l\'URL de pagament del servidor');
       }
-
+      
       // Redirect to Stripe Checkout
       window.location.href = responseData.url;
 
@@ -235,8 +235,8 @@ const PricingPage = () => {
       });
     } finally {
       setIsSubmittingBeta(false);
-    }
-  };
+      }
+    };
 
   // Scroll to section
   const scrollToSection = (id) => {
@@ -318,7 +318,7 @@ const PricingPage = () => {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 lg:pt-40 lg:pb-24 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-full text-sm font-medium mb-6">
@@ -328,7 +328,7 @@ const PricingPage = () => {
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-title text-gray-900 mb-6">
               Tria el pla perfecte per al teu estudi
-            </h1>
+          </h1>
             <p className="text-xl text-gray-600 mb-8">
               Tots els plans inclouen accés complet a la normativa de 947 municipis i preguntes il·limitades a l'IA.
             </p>
@@ -361,21 +361,21 @@ const PricingPage = () => {
       {/* Pricing Cards */}
       <section className="py-12 lg:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Error Display */}
-          {error && (
-            <div className="max-w-2xl mx-auto mb-8">
+        {/* Error Display */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-8">
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-red-800">{error}</p>
-                </div>
+                </svg>
+                <p className="text-red-800">{error}</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {PRICING_TIERS.map((tier) => (
               <div
                 key={tier.id}
@@ -397,8 +397,8 @@ const PricingPage = () => {
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold font-title text-gray-900 mb-2">{tier.name}</h3>
                   <p className="text-sm text-gray-500 mb-6">{tier.description}</p>
-                  
-                  {/* Price */}
+                    
+                    {/* Price */}
                   <div className="mb-6">
                     <div className="flex items-baseline justify-center gap-2">
                       <span className="text-5xl font-bold text-gray-900">€{tier.price.toFixed(2)}</span>
@@ -407,8 +407,8 @@ const PricingPage = () => {
                     {tier.id === 'studio' && (
                       <p className="text-sm text-gray-500 mt-2">Preu personalitzat per equips grans</p>
                     )}
+                    </div>
                   </div>
-                </div>
 
                 {/* Features */}
                 <ul className="space-y-4 mb-8">
@@ -429,9 +429,9 @@ const PricingPage = () => {
                           <span className="text-gray-900 font-semibold"> — {feature.value}</span>
                         )}
                       </span>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
 
               </div>
             ))}
@@ -493,7 +493,7 @@ const PricingPage = () => {
                     <p className="mt-1 text-sm text-red-600">{betaEmailError}</p>
                   )}
                 </div>
-                <button
+                  <button
                   type="submit"
                   disabled={isSubmittingBeta}
                   className="px-6 py-3 bg-blue-600 text-white text-base font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
@@ -509,7 +509,7 @@ const PricingPage = () => {
                     : 'bg-red-50 border border-red-200 text-red-800'
                 }`}>
                   <p className="text-sm">{betaStatus.message}</p>
-                </div>
+                      </div>
               )}
             </div>
 
@@ -527,8 +527,8 @@ const PricingPage = () => {
                 <div className="text-sm text-gray-600">Accés anticipat</div>
               </div>
             </div>
-          </div>
-        </div>
+                </div>
+              </div>
       </section>
 
       {/* Comparison Table */}
@@ -613,8 +613,8 @@ const PricingPage = () => {
                               </svg>
                             )}
                           </td>
-                        );
-                      })}
+            );
+          })}
                     </tr>
                   ))}
                   {/* Studio extra feature */}
@@ -661,15 +661,15 @@ const PricingPage = () => {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Suport dedicat</h3>
-              <p className="text-gray-600">
-                Estem aquí per ajudar-te. Contacta amb nosaltres sempre que necessitis assistència.
-              </p>
+              </svg>
             </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Suport dedicat</h3>
+            <p className="text-gray-600">
+                Estem aquí per ajudar-te. Contacta amb nosaltres sempre que necessitis assistència.
+            </p>
           </div>
         </div>
+      </div>
       </section>
 
       {/* FAQ Section */}

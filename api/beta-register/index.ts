@@ -134,18 +134,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2) Insert into beta_registrations
     console.log('Inserting into beta_registrations table');
+    const betaRegData: any = {
+      email: email.trim(),
+      user_id,
+      granted: true,
+      granted_at: new Date().toISOString(),
+      questions_used: 0,
+      tokens_used: 0
+    };
+    
+    // Only include optional fields if they have values
+    if (name) betaRegData.name = name;
+    if (company) betaRegData.company = company;
+    if (role) betaRegData.role = role;
+    if (additional_metadata) betaRegData.additional_metadata = additional_metadata;
+    
     const { error: insertError } = await supabaseAdmin
       .from('beta_registrations')
-      .insert([{
-        email: email.trim(),
-        name: name || null,
-        company: company || null,
-        role: role || null,
-        additional_metadata: additional_metadata || {},
-        user_id,
-        granted: true,
-        granted_at: new Date().toISOString()
-      }]);
+      .insert([betaRegData]);
 
     if (insertError) {
       console.error('insert error:', insertError);
