@@ -4,7 +4,7 @@ import LoginPage from '/src/pages/LoginPage';
 import SignupPage from '/src/pages/SignupPage';
 import ChatPage from '/src/pages/ChatPage';
 import PaymentPage from '/src/pages/PaymentPage';
-import PricingPage from '/src/pages/PricingPage';
+// import PricingPage from '/src/pages/PricingPage'; // Hidden for now
 import UserAccountPage from '/src/pages/UserAccountPage';
 import ProjectsPage from '/src/pages/ProjectsPage';
 import ProjectChatPage from '/src/pages/ProjectChatPage';
@@ -537,11 +537,12 @@ function App() {
               - Only accessible to authenticated users
               - Creates Stripe checkout sessions for subscriptions
               - Handles subscription selection and payment flow
+              HIDDEN FOR NOW
             */}
-            <Route 
+            {/* <Route 
               path="/pricing" 
               element={<PricingPage />} 
-            />
+            /> */}
 
             {/* 
               PROTECTED ROUTE: User Account Page

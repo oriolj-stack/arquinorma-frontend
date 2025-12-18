@@ -63,10 +63,10 @@ const UpgradeModal = ({
   const config = tierConfig[tier] || tierConfig.pro;
 
   /**
-   * Handle upgrade button click - redirect to pricing page
+   * Handle upgrade button click - redirect to subscription page
    */
   const handleUpgrade = () => {
-    navigate('/pricing');
+    navigate('/subscription'); // Changed from /pricing to /subscription
     onClose();
   };
 
