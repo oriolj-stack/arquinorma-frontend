@@ -90,10 +90,12 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
   const loadTowns = async () => {
     setLoadingTowns(true);
     try {
-      // Use proxy URL directly for testing
-      const url = '/api/towns';
+      // Use backend API URL
+      const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
+      const url = `${baseUrl}/api/towns`;
       console.log('Loading towns from URL:', url);
       console.log('env.api.baseUrl:', env.api.baseUrl);
+      
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to load towns: ${response.status} ${response.statusText}`);
@@ -106,6 +108,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
       });
       
       setTowns(sortedTowns);
+      console.log(`Loaded ${sortedTowns.length} towns successfully`);
     } catch (error) {
       console.error('Error loading towns:', error);
       setTowns([]);
