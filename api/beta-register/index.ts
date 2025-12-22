@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Check for SUPABASE_URL or fall back to VITE_SUPABASE_URL
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+// Check for SUPABASE_SERVICE_ROLE_KEY or fall back to SUPABASE_SERVICE_KEY
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
 // Debug logging (will appear in Vercel function logs)
 console.log('Environment variables check:', {
@@ -12,7 +14,8 @@ console.log('Environment variables check:', {
   keyLength: SUPABASE_SERVICE_ROLE_KEY?.length || 0,
   urlPreview: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'NOT SET',
   keyPreview: SUPABASE_SERVICE_ROLE_KEY ? `${SUPABASE_SERVICE_ROLE_KEY.substring(0, 20)}...` : 'NOT SET',
-  allEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE')).join(', ')
+  allEnvKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE')).join(', '),
+  usingViteUrl: !process.env.SUPABASE_URL && !!process.env.VITE_SUPABASE_URL
 });
 
 // Validate environment variables
@@ -88,12 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       return res.status(500).json({ 
         success: false,
-        error: 'Server configuration error: Missing Supabase credentials',
-        debug: {
-          hasUrl: !!SUPABASE_URL,
-          hasKey: !!SUPABASE_SERVICE_ROLE_KEY,
-          availableKeys: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
-        }
+        error: 'Error de configuració del servidor. Si us plau, torna-ho a provar més tard.'
       });
     }
 
