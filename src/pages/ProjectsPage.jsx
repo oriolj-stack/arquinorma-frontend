@@ -48,7 +48,9 @@ const ProjectsPage = () => {
         return;
       }
 
-      const response = await fetch(`${env.api.baseUrl}/api/subscriptions/quota`, {
+      // Ensure no double slashes
+      const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
+      const response = await fetch(`${baseUrl}/api/subscriptions/quota`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'

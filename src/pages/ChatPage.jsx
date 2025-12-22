@@ -153,7 +153,7 @@ const ChatPage = () => {
   const messagesEndRef = useRef(null);
   const isSubmittingRef = useRef(false);
   
-  // Backend API configuration (using Cloudflare Tunnel)
+  // Backend API configuration
   const API_BASE_URL = env.api.baseUrl;
   
   // Debug: Expose API URL to window for console debugging
@@ -228,9 +228,11 @@ const ChatPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
       
+      // Ensure no double slashes
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
       const url = userId 
-        ? `${API_BASE_URL}/api/ask/limits?user_id=${userId}`
-        : `${API_BASE_URL}/api/ask/limits`;
+        ? `${baseUrl}/api/ask/limits?user_id=${userId}`
+        : `${baseUrl}/api/ask/limits`;
       
       const response = await fetch(url);
       if (response.ok) {
@@ -263,9 +265,12 @@ const ChatPage = () => {
         throw new Error(errorMsg);
       }
       
-      const fullUrl = `${API_BASE_URL}/api/ask`;
+      // Ensure no double slashes
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+      const fullUrl = `${baseUrl}/api/ask`;
       console.log(`Sending question to ${fullUrl}:`, question);
       console.log('API_BASE_URL:', API_BASE_URL);
+      console.log('baseUrl (normalized):', baseUrl);
       
       const { data: { user } } = await supabase.auth.getUser();
       
