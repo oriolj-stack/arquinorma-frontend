@@ -440,12 +440,12 @@ const LandingPage = () => {
               >
                 FAQ
               </button>
-              {/* <Link 
+              <Link 
                 to="/pricing" 
                 className={`text-sm font-medium transition-colors ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-gray-700 hover:text-gray-900'}`}
               >
                 Preus
-              </Link> */}
+              </Link>
             </div>
 
             {/* CTA Buttons */}
@@ -1184,7 +1184,7 @@ const LandingPage = () => {
               <h4 className="font-semibold mb-4">Producte</h4>
               <ul className="space-y-2 text-gray-400">
                 <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Funcionalitats</button></li>
-                {/* <li><Link to="/pricing" className="hover:text-white transition-colors">Preus</Link></li> */}
+                <li><Link to="/pricing" className="hover:text-white transition-colors">Preus</Link></li>
                 <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white transition-colors">Com funciona</button></li>
               </ul>
             </div>
