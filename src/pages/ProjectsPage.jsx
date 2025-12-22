@@ -321,7 +321,9 @@ const ProjectsPage = () => {
     // Check quota if subscription info is loaded
     if (subscription && !quotaLoading) {
       const projectsQuota = subscription.projects;
-      const canCreate = projectsQuota.unlimited || 
+      // Beta users have unlimited access - always allow
+      const isBeta = subscription.tier === 'beta';
+      const canCreate = isBeta || projectsQuota.unlimited || 
         (projectsQuota.used < projectsQuota.limit);
       
       if (!canCreate) {
@@ -464,7 +466,9 @@ const ProjectsPage = () => {
               {/* Quota indicator */}
               {subscription && !quotaLoading && (
                 <div className="text-sm text-gray-600">
-                  {subscription.projects.unlimited ? (
+                  {subscription.tier === 'beta' ? (
+                    <span className="text-purple-600 font-medium">Beta Tester - Unlimited</span>
+                  ) : subscription.projects.unlimited ? (
                     <span className="text-green-600">Unlimited projects</span>
                   ) : (
                     <span>
@@ -475,7 +479,7 @@ const ProjectsPage = () => {
               )}
               <button
                 onClick={handleNewProject}
-                disabled={subscription && !quotaLoading && !subscription.projects.unlimited && subscription.projects.used >= subscription.projects.limit}
+                disabled={subscription && !quotaLoading && subscription.tier !== 'beta' && !subscription.projects.unlimited && subscription.projects.used >= subscription.projects.limit}
                 className="bg-cte-primary hover:bg-cte-primary-dark text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

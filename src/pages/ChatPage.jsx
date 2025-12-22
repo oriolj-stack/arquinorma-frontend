@@ -504,26 +504,34 @@ const ChatPage = () => {
     const subscriptionInfo = {
       free: { name: 'Gratuït', color: 'gray', limit: 5 },
       personal: { name: 'Personal', color: 'blue', limit: 100 },
-      corporate: { name: 'Corporatiu', color: 'green', limit: 1000 }
+      corporate: { name: 'Corporatiu', color: 'green', limit: 1000 },
+      beta: { name: 'Beta Tester', color: 'purple', limit: '∞' }
     };
 
     const info = subscriptionInfo[subscription?.level] || subscriptionInfo.free;
     const remaining = rateLimitInfo?.requests_remaining || 0;
 
+    // Beta users have unlimited questions
+    const isBeta = subscription?.level === 'beta' || rateLimitInfo?.subscription_level === 'beta';
+    const displayRemaining = isBeta ? '∞' : remaining;
+    const displayLimit = isBeta ? '∞' : info.limit;
+
     return (
       <div className={`flex items-center space-x-2 text-sm px-3 py-1 rounded-full ${
         info.color === 'gray' ? 'bg-gray-100 text-gray-800' :
         info.color === 'blue' ? 'bg-blue-100 text-blue-800' :
+        info.color === 'purple' ? 'bg-purple-100 text-purple-800' :
         'bg-green-100 text-green-800'
       }`}>
         <div className={`w-2 h-2 rounded-full ${
           info.color === 'gray' ? 'bg-gray-500' :
           info.color === 'blue' ? 'bg-blue-500' :
+          info.color === 'purple' ? 'bg-purple-500' :
           'bg-green-500'
         }`}></div>
         <span>{info.name}</span>
         <span>•</span>
-        <span>{remaining}/{info.limit} preguntes</span>
+        <span>{displayRemaining}/{displayLimit} preguntes</span>
       </div>
     );
   };

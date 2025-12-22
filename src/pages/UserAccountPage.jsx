@@ -374,7 +374,8 @@ const UserAccountPage = () => {
       'free': 'Free',
       'basic': 'Basic',
       'pro': 'Pro',
-      'studio': 'Studio'
+      'studio': 'Studio',
+      'beta': 'Beta Tester'
     };
     return planMap[tier] || 'Unknown';
   };
@@ -1198,17 +1199,25 @@ const UserAccountPage = () => {
                       <h3 className="text-lg font-semibold text-gray-900">{t('subscription.currentPlan.title')}</h3>
                       {subscription && subscription.tier !== 'free' ? (
                         <>
-                          <p className="text-gray-700">{getPlanName(subscription.tier)}</p>
+                          <p className={`text-gray-700 ${subscription.tier === 'beta' ? 'font-semibold text-purple-600' : ''}`}>
+                            {getPlanName(subscription.tier)}
+                            {subscription.tier === 'beta' && ' - Accés Il·limitat'}
+                          </p>
                           <p className="text-sm text-gray-600 mt-1">
                             {t('subscription.currentPlan.status')}: <span className={`font-medium ${
-                              subscription.status === 'active' ? 'text-green-600' : 'text-red-600'
+                              subscription.status === 'active' || subscription.tier === 'beta' ? 'text-green-600' : 'text-red-600'
                             }`}>
-                              {formatStatus(subscription.status)}
+                              {subscription.tier === 'beta' ? 'Actiu' : formatStatus(subscription.status)}
                             </span>
                           </p>
-                          {subscription.renewal_date && (
+                          {subscription.renewal_date && subscription.tier !== 'beta' && (
                             <p className="text-sm text-gray-600">
                               {t('subscription.currentPlan.renewal')}: {new Date(subscription.renewal_date).toLocaleDateString('ca-ES')}
+                            </p>
+                          )}
+                          {subscription.tier === 'beta' && (
+                            <p className="text-sm text-purple-600 mt-1">
+                              Gràcies per provar ArquiNorma! Tens accés complet a totes les funcions.
                             </p>
                           )}
                         </>
@@ -1223,11 +1232,11 @@ const UserAccountPage = () => {
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
                       <div>
-                        <div className="text-2xl font-bold text-gray-900">
-                          {subscription && subscription.tier !== 'free' ? 'Actiu' : 'Gratuït'}
+                        <div className={`text-2xl font-bold ${subscription?.tier === 'beta' ? 'text-purple-600' : 'text-gray-900'}`}>
+                          {subscription?.tier === 'beta' ? 'Beta' : subscription && subscription.tier !== 'free' ? 'Actiu' : 'Gratuït'}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {subscription && subscription.tier !== 'free' ? 'Per mes' : 'Per sempre'}
+                          {subscription?.tier === 'beta' ? 'Accés complet' : subscription && subscription.tier !== 'free' ? 'Per mes' : 'Per sempre'}
                         </div>
                       </div>
                       <button
