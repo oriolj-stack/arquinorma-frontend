@@ -56,10 +56,12 @@ export default function EarlyAccessElite7f4a() {
       };
 
       const apiBaseUrl = getApiBaseUrl();
-      const apiUrl = `${apiBaseUrl}/api/beta-register`;
+      // Ensure we use the correct URL format
+      const apiUrl = apiBaseUrl ? `${apiBaseUrl}/api/beta-register` : '/api/beta-register';
       
       console.log('Calling beta-register API:', apiUrl);
       console.log('Form data:', { ...formData, password: '***' }); // Don't log password
+      console.log('Full URL will be:', window.location.origin + apiUrl);
       
       let resp;
       try {
