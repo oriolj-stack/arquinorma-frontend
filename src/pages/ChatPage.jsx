@@ -153,15 +153,15 @@ const ChatPage = () => {
   const messagesEndRef = useRef(null);
   const isSubmittingRef = useRef(false);
   
-  // API configuration - now uses Vercel serverless function (no backend URL needed)
-  const API_BASE_URL = ''; // Empty string = relative URL to Vercel function
+  // Backend API configuration (using Cloudflare Tunnel)
+  const API_BASE_URL = env.api.baseUrl;
   
-  // Debug: Expose API info to window for console debugging
+  // Debug: Expose API URL to window for console debugging
   if (typeof window !== 'undefined') {
     window.__ARQUINORMA_DEBUG__ = {
-      apiMode: 'Vercel Serverless',
-      apiUrl: '/api/ask',
+      apiBaseUrl: API_BASE_URL,
       env: import.meta.env.MODE,
+      backendUrl: import.meta.env.VITE_BACKEND_URL,
       timestamp: new Date().toISOString()
     };
     console.log('🔧 ArquiNorma Debug Info:', window.__ARQUINORMA_DEBUG__);
@@ -228,18 +228,11 @@ const ChatPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
       
-      // Note: Rate limits endpoint not implemented yet in Vercel function
-      // For now, skip this check - rate limiting happens on request
-      console.log('Rate limit check skipped - handled by serverless function');
-      return; // Skip for now
-      
-      /* Future implementation:
       const url = userId 
-        ? `/api/ask/limits?user_id=${userId}`
-        : `/api/ask/limits`;
+        ? `${API_BASE_URL}/api/ask/limits?user_id=${userId}`
+        : `${API_BASE_URL}/api/ask/limits`;
       
       const response = await fetch(url);
-      */
       if (response.ok) {
         const data = await response.json();
         setRateLimitInfo(data);
@@ -261,10 +254,18 @@ const ChatPage = () => {
    */
   const sendQuestionToBackend = async (question) => {
     try {
-      // Use Vercel serverless function (relative URL)
-      const fullUrl = '/api/ask';
-      console.log(`Sending question to Vercel function:`, fullUrl);
-      console.log('Question:', question.substring(0, 50) + '...');
+      // Validate API base URL is configured
+      if (!API_BASE_URL || API_BASE_URL.trim() === '') {
+        const errorMsg = 'Backend API URL is not configured. Please set VITE_BACKEND_URL in Vercel environment variables.';
+        console.error('❌', errorMsg);
+        console.error('Current API_BASE_URL:', API_BASE_URL);
+        console.error('Environment:', import.meta.env.MODE);
+        throw new Error(errorMsg);
+      }
+      
+      const fullUrl = `${API_BASE_URL}/api/ask`;
+      console.log(`Sending question to ${fullUrl}:`, question);
+      console.log('API_BASE_URL:', API_BASE_URL);
       
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -325,10 +326,12 @@ const ChatPage = () => {
       
       // Handle network/CORS errors
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        const networkError = `Network error: Cannot connect to AI service.\n\n` +
+        const networkError = `Network error: Cannot connect to backend API.\n\n` +
+          `API URL: ${API_BASE_URL || 'NOT CONFIGURED'}\n` +
           `This usually means:\n` +
-          `1. The Vercel serverless function is not deployed, OR\n` +
-          `2. There's a network connectivity issue.\n\n` +
+          `1. VITE_BACKEND_URL is not set in Vercel environment variables, OR\n` +
+          `2. The Cloudflare tunnel is not running, OR\n` +
+          `3. There's a CORS configuration issue.\n\n` +
           `Check the browser console for more details.`;
         throw new Error(networkError);
       }
