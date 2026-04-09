@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import AuthPrompt from './AuthPrompt';
 import { env } from '../config/env';
+import { toast } from 'sonner';
 
 const ProjectChat = ({ projectId }) => {
   const [messages, setMessages] = useState([]);
@@ -418,17 +419,12 @@ const ProjectChat = ({ projectId }) => {
 
       // Remove the message from local state
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
-      console.log('✅ Message deleted successfully from UI');
-      
-      // Clear any existing errors
+      toast.success('Missatge eliminat');
       setError(null);
 
     } catch (err) {
       console.error('❌ Error deleting message:', err);
-      setError(`Failed to delete message: ${err.message}`);
-      
-      // Show alert for better user feedback
-      alert(`Error deleting message: ${err.message}`);
+      toast.error(`Error en eliminar el missatge: ${err.message}`);
     } finally {
       setDeleteLoading(false);
     }

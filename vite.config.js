@@ -17,8 +17,9 @@ export default defineConfig({
     // Output directory (dist is default and works with most platforms)
     outDir: 'dist',
     
-    // Generate source maps for better debugging in production
-    sourcemap: true,
+    // Hidden source maps: generated but not linked from the bundle.
+    // Upload to Sentry for private debugging; not readable in DevTools.
+    sourcemap: 'hidden',
     
     // Optimize bundle size
     minify: 'terser',
@@ -130,8 +131,10 @@ export default defineConfig({
   
   // ESBuild configuration for faster builds
   esbuild: {
-    // Remove console.log in production
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+    // Drop console.log/console.debug in production but keep console.error/console.warn
+    // so Sentry and error tracking still capture caught errors.
+    pure: process.env.NODE_ENV === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+    drop: process.env.NODE_ENV === 'production' ? ['debugger'] : []
   }
 })
 

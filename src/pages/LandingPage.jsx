@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { submitWaitingListEntry, validateWaitingListForm } from '../services/waitingListService';
+import { PRICING_TIERS } from '../config/pricingConfig';
 
 /**
  * ArquiNorma Landing Page
- * 
+ *
  * High-converting, frictionless landing page targeting young architects.
  * Features:
  * - Hero section with strong value proposition
@@ -16,63 +17,6 @@ import { submitWaitingListEntry, validateWaitingListForm } from '../services/wai
  * - Minimal-friction waiting list form
  * - Consistent with app branding (amber/yellow theme)
  */
-
-// Pricing tiers for comparison
-const PRICING_TIERS = [
-  {
-    id: 'basic',
-    name: 'Bàsic',
-    price: 5.99,
-    description: 'Per a projectes individuals',
-    features: [
-      { name: 'Projectes actius', value: '5', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: '20/mes', included: true },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport per correu', value: true, included: true },
-      { name: 'Pujades de PDF', value: false, included: false },
-      { name: 'Comparació de documents', value: false, included: false },
-      { name: 'Accés API', value: false, included: false },
-    ],
-    cta: 'Començar amb Bàsic'
-  },
-  {
-    id: 'pro',
-    name: 'Professional',
-    price: 14.99,
-    description: 'Per a professionals exigents',
-    popular: true,
-    features: [
-      { name: 'Projectes actius', value: '25', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: '100/mes', included: true },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport prioritari', value: true, included: true },
-      { name: 'Pujades de PDF', value: 'Il·limitades', included: true },
-      { name: 'Comparació de documents', value: true, included: true },
-      { name: 'Accés API', value: false, included: false },
-    ],
-    cta: 'Començar amb Pro'
-  },
-  {
-    id: 'studio',
-    name: 'Estudi',
-    price: 49.00,
-    description: 'Per a equips i estudis',
-    features: [
-      { name: 'Projectes actius', value: 'Il·limitats', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: 'Il·limitats', included: true },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport dedicat', value: true, included: true },
-      { name: 'Pujades de PDF', value: 'Il·limitades', included: true },
-      { name: 'Comparació de documents', value: true, included: true },
-      { name: 'Accés API', value: true, included: true },
-      { name: 'Membres d\'equip', value: '10 inclosos', included: true },
-    ],
-    cta: 'Contactar vendes'
-  }
-];
 
 // Testimonials data
 const TESTIMONIALS = [

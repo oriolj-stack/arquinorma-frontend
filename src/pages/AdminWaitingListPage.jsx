@@ -398,50 +398,7 @@ const AdminWaitingListPage = () => {
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for development user first
-      if (env.app.isDevelopment) {
-        const devUser = localStorage.getItem('dev_staff_user');
-        if (devUser) {
-          const parsedUser = JSON.parse(devUser);
-          setUser(parsedUser);
-          setLoading(false);
-          
-          // In dev mode, try to sign in as the dev user to create a real session
-          // This allows RLS policies to work properly
-          try {
-            // Check if we already have a session
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-              console.log('🔐 No session found, attempting to sign in as dev user...');
-              // Try to sign in with a dev password (you may need to create this user in Supabase)
-              // For now, we'll use the admin client approach
-              console.log('⚠️ Using admin client for dev mode (RLS bypass)');
-            } else {
-              console.log('✅ Existing session found:', session.user.email);
-            }
-          } catch (err) {
-            console.warn('Could not check/create session:', err);
-          }
-          
-          loadData();
-          return;
-        } else {
-          // Set up a default development user
-          const defaultDevUser = {
-            id: 'dev_staff_1',
-            email: 'staff@arquinorma.dev',
-            role: 'staff',
-            full_name: 'Staff User'
-          };
-          localStorage.setItem('dev_staff_user', JSON.stringify(defaultDevUser));
-          setUser(defaultDevUser);
-          setLoading(false);
-          loadData();
-          return;
-        }
-      }
-
-      // Regular Supabase authentication
+            // Regular Supabase authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/staff/login');
@@ -513,8 +470,6 @@ const AdminWaitingListPage = () => {
     }
 
     // Check if using dev user
-    const isDevUser = env.app.isDevelopment && localStorage.getItem('dev_staff_user');
-
     const result = await getWaitingListEntries({
       page,
       pageSize,

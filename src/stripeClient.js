@@ -36,36 +36,28 @@ const getStripe = () => {
 };
 
 /**
- * Subscription level configurations
- * These should match the product configurations in your Stripe dashboard
+ * Subscription level configurations — derived from pricingConfig.js
+ * IDs must match the backend stripe_elements.py SUBSCRIPTION_TIERS keys.
  */
 export const subscriptionLevels = {
-  personal: {
-    name: 'ArquiNorma Personal',
-    description: 'Perfect for individual users',
-    features: [
-      'Up to 50 PDF documents',
-      'Basic chat functionality', 
-      'Email support',
-      '5GB storage'
-    ],
-    price: '$9.99/month',
-    recommended: false
+  basic: {
+    name: 'Bàsic',
+    description: 'Per a projectes individuals',
+    price: '€5.99/mes',
+    recommended: false,
   },
-  corporate: {
-    name: 'ArquiNorma Corporate', 
-    description: 'Ideal for teams and organizations',
-    features: [
-      'Unlimited PDF documents',
-      'Advanced chat features',
-      'Priority support',
-      'Team collaboration',
-      'API access',
-      '100GB storage'
-    ],
-    price: '$49.99/month',
-    recommended: true
-  }
+  pro: {
+    name: 'Professional',
+    description: 'Per a professionals exigents',
+    price: '€14.99/mes',
+    recommended: true,
+  },
+  studio: {
+    name: 'Estudi',
+    description: "Per a equips i estudis d'arquitectura",
+    price: '€49.00/mes',
+    recommended: false,
+  },
 };
 
 /**
@@ -134,12 +126,17 @@ export const checkout = async (subscriptionLevel, options = {}) => {
      */
     console.log(`Calling backend API: ${env.api.baseUrl}/create-checkout-session`);
     
+    // Attach the user's JWT so the backend can verify identity
+    const { data: { session: authSession } } = await (await import('./supabaseClient')).supabase.auth.getSession();
+    const authHeaders = authSession?.access_token
+      ? { Authorization: `Bearer ${authSession.access_token}` }
+      : {};
+
     const response = await fetch(`${env.api.baseUrl}/create-checkout-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Add authentication headers if needed
-        // 'Authorization': `Bearer ${userToken}`,
+        ...authHeaders,
       },
       body: JSON.stringify({
         subscription_level: subscriptionLevel,

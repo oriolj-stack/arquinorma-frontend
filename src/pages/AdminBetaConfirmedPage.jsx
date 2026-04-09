@@ -22,32 +22,7 @@ const AdminBetaConfirmedPage = () => {
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for development user first
-      if (env.app.isDevelopment) {
-        const devUser = localStorage.getItem('dev_staff_user');
-        if (devUser) {
-          const parsedUser = JSON.parse(devUser);
-          setUser(parsedUser);
-          setLoading(false);
-          loadConfirmedUsers();
-          return;
-        } else {
-          // Set up a default development user
-          const defaultDevUser = {
-            id: 'dev_staff_1',
-            email: 'staff@arquinorma.dev',
-            role: 'staff',
-            full_name: 'Staff User'
-          };
-          localStorage.setItem('dev_staff_user', JSON.stringify(defaultDevUser));
-          setUser(defaultDevUser);
-          setLoading(false);
-          loadConfirmedUsers();
-          return;
-        }
-      }
-
-      // Regular Supabase authentication
+            // Regular Supabase authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/staff/login');

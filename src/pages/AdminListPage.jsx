@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { env } from '../config/env';
 import AdminHeader from '../components/Admin/AdminHeader';
+import { toast } from 'sonner';
 
 // Use the centralized API base URL from env config
 const API_BASE = env.api.baseUrl;
@@ -31,33 +32,7 @@ const AdminListPage = () => {
   // Check authentication on component mount
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for development user first
-      if (env.app.isDevelopment) {
-        console.log('Checking for development user...');
-        const devUser = localStorage.getItem('dev_staff_user');
-        if (devUser) {
-          console.log('Development user found:', devUser);
-          const parsedUser = JSON.parse(devUser);
-          setUser(parsedUser);
-          setLoading(false);
-          return;
-        } else {
-          console.log('No development user found, setting up default dev user');
-          // Set up a default development user
-          const defaultDevUser = {
-            id: 'dev_staff_1',
-            email: 'staff@arquinorma.dev',
-            role: 'staff',
-            full_name: 'Staff User'
-          };
-          localStorage.setItem('dev_staff_user', JSON.stringify(defaultDevUser));
-          setUser(defaultDevUser);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Regular Supabase authentication
+            // Regular Supabase authentication
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -303,7 +278,7 @@ const AdminListPage = () => {
       }
     } catch (error) {
       console.error('Error opening document:', error);
-      alert(`Error al obrir el document: ${error.message}`);
+      toast.error(`Error al obrir el document: ${error.message}`);
     }
   };
 

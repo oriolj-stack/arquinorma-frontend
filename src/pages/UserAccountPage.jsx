@@ -59,7 +59,6 @@ const UserAccountPage = () => {
   // Subscription state
   const [subscription, setSubscription] = useState(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionMessage, setSubscriptionMessage] = useState({ type: '', text: '' });
 
   // Checkout modal state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -186,211 +185,6 @@ const UserAccountPage = () => {
     } finally {
       setSubscriptionLoading(false);
     }
-  };
-
-  /**
-   * Cancel subscription
-   */
-  const handleCancelSubscription = async () => {
-    if (!subscription?.subscription_id) {
-      setSubscriptionMessage({ type: 'error', text: t('subscription.management.noActiveSubscription') });
-      return;
-    }
-
-    try {
-      setSubscriptionLoading(true);
-      setSubscriptionMessage({ type: '', text: '' });
-
-      // Call backend endpoint to cancel subscription
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        throw new Error('No active session');
-      }
-
-      const response = await fetch(`${env.api.baseUrl}/api/subscriptions/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          subscription_id: subscription.subscription_id
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cancel·lar la subscripció');
-      }
-
-      // Reload subscription data
-      await loadSubscription();
-      setSubscriptionMessage({ type: 'success', text: t('subscription.management.cancelSuccess') });
-      
-    } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      setSubscriptionMessage({ type: 'error', text: error.message || t('subscription.management.cancelError') });
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  };
-
-  /**
-   * Upgrade subscription - navigate to the full subscription management page
-   */
-  const handleUpgradeSubscription = (tierId) => {
-    // Navigate to the full subscription page for a better experience
-    navigate('/subscription');
-  };
-
-  /**
-   * Handle successful checkout - refresh subscription data
-   */
-  const handleCheckoutSuccess = async () => {
-    setIsCheckoutOpen(false);
-    setSelectedUpgradeTier(null);
-    setSubscriptionMessage({ 
-      type: 'success', 
-      text: 'La subscripció s\'ha actualitzat correctament!' 
-    });
-    
-    // Reload subscription data
-    await loadSubscriptionStatus();
-  };
-
-  /**
-   * Legacy upgrade function (kept for reference)
-   * Now using Stripe Elements modal instead
-   */
-  const handleLegacyUpgradeSubscription = async (tierId) => {
-    try {
-      setSubscriptionLoading(true);
-      setSubscriptionMessage({ type: '', text: '' });
-
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) {
-        throw new Error('No active session');
-      }
-
-      // Determine backend URL - use proxy in development if baseUrl is not set
-      // In development, Vite proxy handles /stripe requests
-      // In production, use the configured backend URL
-      const backendUrl = env.api.baseUrl || (import.meta.env.DEV ? '' : 'https://your-backend-url.com');
-      const apiUrl = backendUrl ? `${backendUrl}/stripe/create-checkout-session` : '/stripe/create-checkout-session';
-
-      console.log('Creating checkout session:', { 
-        tierId, 
-        apiUrl, 
-        userId: session.user.id,
-        backendUrl: backendUrl,
-        isDev: import.meta.env.DEV
-      });
-
-      // Call backend to create Stripe checkout session
-      let response;
-      let responseData;
-      
-      try {
-        response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subscription_level: tierId,  // basic, pro, or studio
-            user_id: session.user.id,
-            user_email: session.user.email,
-            success_url: `${window.location.origin}/account?tab=subscription&success=true`,
-            cancel_url: `${window.location.origin}/account?tab=subscription&canceled=true`
-          })
-        });
-      } catch (networkError) {
-        console.error('Network error details:', {
-          error: networkError,
-          message: networkError.message,
-          name: networkError.name,
-          apiUrl: apiUrl,
-          backendUrl: backendUrl || '(using proxy)',
-          isDev: import.meta.env.DEV
-        });
-        
-        // Provide more helpful error message
-        if (networkError.message.includes('Failed to fetch') || 
-            networkError.message.includes('NetworkError') ||
-            networkError.name === 'TypeError') {
-          if (import.meta.env.DEV) {
-            throw new Error('El servidor backend no està en funcionament.\n\nPer iniciar-lo:\n1. Obre una nova terminal\n2. Executa: cd backend\n3. Executa: uvicorn app.main:app --reload\n\nO utilitza: .\\START_BACKEND.ps1');
-          } else {
-            throw new Error(`Error de connexió: No s'ha pogut connectar amb el servidor backend. Verifiqueu que el servidor estigui en funcionament.`);
-          }
-        }
-        throw networkError;
-      }
-
-      // Try to parse response as JSON
-      try {
-        const text = await response.text();
-        responseData = text ? JSON.parse(text) : {};
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error(`Error del servidor: Resposta invàlida. Codi d'estat: ${response.status}`);
-      }
-
-      if (!response.ok) {
-        // Extract error message from backend response
-        const errorMessage = responseData.detail || responseData.message || `Error del servidor (${response.status}): ${response.statusText}`;
-        console.error('Backend error:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData
-        });
-        throw new Error(errorMessage);
-      }
-
-      // Check if URL is in response
-      if (!responseData.url) {
-        console.error('No URL in response:', responseData);
-        throw new Error('No checkout URL received from server');
-      }
-
-      console.log('Checkout session created, redirecting to:', responseData.url);
-      
-      // Redirect to Stripe Checkout
-      window.location.href = responseData.url;
-      
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      const errorMessage = error.message || 'Error al crear la sessió de pagament. Si us plau, torna-ho a provar.';
-      setSubscriptionMessage({ type: 'error', text: errorMessage });
-      setSubscriptionLoading(false);
-    }
-  };
-
-  /**
-   * Get plan name from tier
-   */
-  const getPlanName = (tier) => {
-    const planMap = {
-      'free': 'Free',
-      'basic': 'Basic',
-      'pro': 'Pro',
-      'studio': 'Studio',
-      'beta': 'Beta Tester'
-    };
-    return planMap[tier] || 'Unknown';
-  };
-
-  /**
-   * Format subscription status
-   */
-  const formatStatus = (status) => {
-    const statusMap = {
-      'active': t('subscription.status.active'),
-      'canceled': t('subscription.status.canceled'),
-      'past_due': t('subscription.status.past_due'),
-      'unpaid': t('subscription.status.unpaid')
-    };
-    return statusMap[status] || status;
   };
 
   /**
@@ -1153,451 +947,90 @@ const UserAccountPage = () => {
           {activeTab === 'subscription' && (
             <div className="p-6">
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('subscription.title')}</h2>
-                <p className="text-gray-600">{t('subscription.description')}</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Subscripció</h2>
+                <p className="text-gray-600">Resum del teu pla actual.</p>
               </div>
 
-              {/* Subscription Loading State */}
               {subscriptionLoading && (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cte-primary"></div>
-                  <span className="ml-2 text-gray-600">{t('subscription.loading')}</span>
+                  <span className="ml-2 text-gray-600">Carregant...</span>
                 </div>
               )}
 
-              {/* Subscription Messages */}
-              {subscriptionMessage.text && (
-                <div className={`mb-6 p-4 border rounded-md ${
-                  subscriptionMessage.type === 'success' 
-                    ? 'bg-green-50 border-green-200' 
-                    : 'bg-red-50 border-red-200'
-                }`}>
-                  <div className="flex items-center">
-                    {subscriptionMessage.type === 'success' ? (
-                      <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    )}
-                    <p className={`text-sm font-medium ${
-                      subscriptionMessage.type === 'success' ? 'text-green-800' : 'text-red-800'
-                    }`}>
-                      {subscriptionMessage.text}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Current Subscription Status */}
+              {/* ── Subscription summary card (full management → /subscription) ── */}
               {!subscriptionLoading && (
-                <div className="bg-gradient-to-r from-cte-primary-light to-cte-primary rounded-lg p-6 mb-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{t('subscription.currentPlan.title')}</h3>
-                      {subscription && subscription.tier !== 'free' ? (
-                        <>
-                          <p className={`text-gray-700 ${subscription.tier === 'beta' ? 'font-semibold text-purple-600' : ''}`}>
-                            {getPlanName(subscription.tier)}
-                            {subscription.tier === 'beta' && ' - Accés Il·limitat'}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {t('subscription.currentPlan.status')}: <span className={`font-medium ${
-                              subscription.status === 'active' || subscription.tier === 'beta' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {subscription.tier === 'beta' ? 'Actiu' : formatStatus(subscription.status)}
-                            </span>
-                          </p>
-                          {subscription.renewal_date && subscription.tier !== 'beta' && (
-                            <p className="text-sm text-gray-600">
-                              {t('subscription.currentPlan.renewal')}: {new Date(subscription.renewal_date).toLocaleDateString('ca-ES')}
-                            </p>
-                          )}
-                          {subscription.tier === 'beta' && (
-                            <p className="text-sm text-purple-600 mt-1">
-                              Gràcies per provar ArquiNorma! Tens accés complet a totes les funcions.
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-gray-700">{t('subscription.currentPlan.free.name')}</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {t('subscription.currentPlan.free.description')}
-                          </p>
-                        </>
-                      )}
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pla actual</div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        {subscription?.tier === 'beta' ? 'Beta'
+                          : subscription?.tier
+                            ? subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)
+                            : 'Gratuït'}
+                      </div>
+                      <div className={`text-sm mt-1 font-medium ${
+                        subscription?.status === 'active' || subscription?.tier === 'beta'
+                          ? 'text-green-600' : 'text-gray-400'
+                      }`}>
+                        {subscription?.tier === 'beta'
+                          ? '● Actiu · Accés complet'
+                          : subscription?.status === 'active'
+                            ? '● Actiu'
+                            : subscription?.tier
+                              ? '● Inactiu'
+                              : 'Sense subscripció de pagament'}
+                      </div>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-2">
-                      <div>
-                        <div className={`text-2xl font-bold ${subscription?.tier === 'beta' ? 'text-purple-600' : 'text-gray-900'}`}>
-                          {subscription?.tier === 'beta' ? 'Beta' : subscription && subscription.tier !== 'free' ? 'Actiu' : 'Gratuït'}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {subscription?.tier === 'beta' ? 'Accés complet' : subscription && subscription.tier !== 'free' ? 'Per mes' : 'Per sempre'}
+                    {subscription?.renewal_date && subscription?.tier !== 'beta' && (
+                      <div className="text-right text-sm">
+                        <div className="text-gray-500">Propera renovació</div>
+                        <div className="font-medium text-gray-900">
+                          {new Date(subscription.renewal_date).toLocaleDateString('ca-ES')}
                         </div>
                       </div>
-                      <button
-                        onClick={() => navigate('/subscription')}
-                        className="mt-2 px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
-                      >
-                        Gestiona la Subscripció
-                      </button>
-                    </div>
+                    )}
                   </div>
-                </div>
-              )}
 
-              {/* Usage Progress Bars */}
-              {!subscriptionLoading && subscription && (
-                <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Ús del pla actual</h3>
-                  
-                  <div className="space-y-6">
-                    {/* Projects Usage */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                          </svg>
-                          <span className="text-sm font-medium text-gray-700">Projectes actius</span>
-                        </div>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {subscription.current_projects || 0}
-                          {subscription.max_projects !== null && subscription.max_projects !== -1 
-                            ? ` / ${subscription.max_projects}` 
-                            : ' / ∞'}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        {subscription.max_projects !== null && subscription.max_projects !== -1 ? (
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              ((subscription.current_projects || 0) / subscription.max_projects) >= 0.85 
-                                ? 'bg-rose-500' 
-                                : 'bg-amber-400'
-                            }`}
-                            style={{ width: `${Math.min(((subscription.current_projects || 0) / subscription.max_projects) * 100, 100)}%` }}
-                          ></div>
-                        ) : (
-                          <div 
-                            className="h-full rounded-full bg-amber-400"
-                            style={{ width: `${Math.min((subscription.current_projects || 0) * 5, 30)}%` }}
-                          ></div>
-                        )}
-                      </div>
-                      {subscription.max_projects !== null && subscription.max_projects !== -1 && (
-                        <p className={`text-xs mt-1 ${
-                          ((subscription.current_projects || 0) / subscription.max_projects) >= 0.85 
-                            ? 'text-rose-600 font-medium' 
-                            : 'text-gray-500'
-                        }`}>
-                          {subscription.max_projects - (subscription.current_projects || 0) > 0 
-                            ? `Pots crear ${subscription.max_projects - (subscription.current_projects || 0)} projectes més` 
-                            : 'Has arribat al límit de projectes'}
-                        </p>
-                      )}
-                      {(subscription.max_projects === null || subscription.max_projects === -1) && (
-                        <p className="text-xs text-gray-500 mt-1">Projectes il·limitats amb el teu pla</p>
-                      )}
-                    </div>
-
-                    {/* Custom PDF Uploads Usage */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                          </svg>
-                          <span className="text-sm font-medium text-gray-700">Pujades de PDF personalitzats</span>
-                        </div>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {subscription.custom_uploads_per_month !== null && subscription.custom_uploads_per_month !== -1 
-                            ? `${subscription.current_uploads || 0} / ${subscription.custom_uploads_per_month}` 
-                            : subscription.tier === 'free' || subscription.tier === 'basic'
-                              ? 'No disponible'
-                              : `${subscription.current_uploads || 0} / ∞`}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        {subscription.tier === 'free' || subscription.tier === 'basic' ? (
-                          <div className="h-full rounded-full bg-gray-300" style={{ width: '100%' }}></div>
-                        ) : subscription.custom_uploads_per_month !== null && subscription.custom_uploads_per_month !== -1 ? (
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              ((subscription.current_uploads || 0) / subscription.custom_uploads_per_month) >= 0.85 
-                                ? 'bg-rose-500' 
-                                : 'bg-amber-400'
-                            }`}
-                            style={{ width: `${Math.min(((subscription.current_uploads || 0) / subscription.custom_uploads_per_month) * 100, 100)}%` }}
-                          ></div>
-                        ) : (
-                          <div 
-                            className="h-full rounded-full bg-amber-400"
-                            style={{ width: `${Math.min((subscription.current_uploads || 0) * 2, 20)}%` }}
-                          ></div>
-                        )}
-                      </div>
-                      {(subscription.tier === 'free' || subscription.tier === 'basic') && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Actualitza a Pro o Studio per pujar PDFs personalitzats
-                        </p>
-                      )}
-                      {subscription.tier !== 'free' && subscription.tier !== 'basic' && (subscription.custom_uploads_per_month === null || subscription.custom_uploads_per_month === -1) && (
-                        <p className="text-xs text-gray-500 mt-1">Pujades il·limitades amb el teu pla</p>
-                      )}
-                    </div>
-
-                    {/* Team Seats Usage (for Studio) */}
-                    {subscription.tier === 'studio' && (
+                  {subscription && (
+                    <div className="border-t border-gray-100 pt-4 mb-5 grid grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                            <span className="text-sm font-medium text-gray-700">Membres de l'equip</span>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900">
-                            {subscription.current_seats || 1} / {subscription.seats_included || 10}
+                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Projectes</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                          {subscription.current_projects || 0}
+                          <span className="text-sm font-normal text-gray-500">
+                            {subscription.max_projects !== null && subscription.max_projects !== -1
+                              ? ` / ${subscription.max_projects}` : ' / ∞'}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              ((subscription.current_seats || 1) / (subscription.seats_included || 10)) >= 0.85 
-                                ? 'bg-rose-500' 
-                                : 'bg-amber-400'
-                            }`}
-                            style={{ width: `${Math.min(((subscription.current_seats || 1) / (subscription.seats_included || 10)) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className={`text-xs mt-1 ${
-                          ((subscription.current_seats || 1) / (subscription.seats_included || 10)) >= 0.85 
-                            ? 'text-rose-600 font-medium' 
-                            : 'text-gray-500'
-                        }`}>
-                          {(subscription.seats_included || 10) - (subscription.current_seats || 1)} places disponibles
-                        </p>
                       </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Plan Features - New 3-Tier System */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {/* Basic Tier */}
-                <div className={`border rounded-lg p-4 ${
-                  subscription?.tier === 'basic' ? 'border-gray-700 border-2' : 'border-gray-200'
-                }`}>
-                  <h4 className="font-medium text-gray-900 mb-2">Basic</h4>
-                  <div className="text-2xl font-bold text-gray-900 mb-2">€5.99<span className="text-sm font-normal text-gray-600">/mes</span></div>
-                  <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Preguntes d'IA il·limitades
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Fins a 5 projectes actius
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Accés a tots els municipis
-                    </li>
-                  </ul>
-                  <button 
-                    onClick={() => handleUpgradeSubscription('basic')}
-                    disabled={subscriptionLoading || (subscription?.tier === 'basic')}
-                    className={`w-full py-2 px-4 rounded-md transition duration-200 ${
-                      subscription?.tier === 'basic' 
-                        ? 'bg-gray-400 cursor-not-allowed text-white' 
-                        : 'bg-gray-700 hover:bg-gray-800 text-white'
-                    }`}
-                  >
-                    {subscriptionLoading ? t('common.loading') : 
-                     subscription?.tier === 'basic' ? 'Pla actual' : 
-                     'Actualitzar a Basic'}
-                  </button>
-                </div>
-
-                {/* Pro Tier - Recommended with yellow border */}
-                <div className={`border-2 rounded-lg p-4 relative ${
-                  subscription?.tier === 'pro' ? 'border-gray-700' : 'border-yellow-400'
-                }`}>
-                  <div className="absolute -top-3 left-4 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-medium">
-                    Recomanat
-                  </div>
-                  <h4 className="font-medium text-gray-900 mb-2">Pro</h4>
-                  <div className="text-2xl font-bold text-gray-900 mb-2">€14.99<span className="text-sm font-normal text-gray-600">/mes</span></div>
-                  <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Preguntes il·limitades
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Projectes il·limitats
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Pujades de PDF personalitzades il·limitades
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Comparació de documents
-                    </li>
-                  </ul>
-                  <button 
-                    onClick={() => handleUpgradeSubscription('pro')}
-                    disabled={subscriptionLoading || (subscription?.tier === 'pro')}
-                    className={`w-full py-2 px-4 rounded-md transition duration-200 ${
-                      subscription?.tier === 'pro' 
-                        ? 'bg-gray-400 cursor-not-allowed text-white' 
-                        : 'bg-gray-700 hover:bg-gray-800 text-white'
-                    }`}
-                  >
-                    {subscriptionLoading ? t('common.loading') : 
-                     subscription?.tier === 'pro' ? 'Pla actual' : 
-                     'Actualitzar a Pro'}
-                  </button>
-                </div>
-
-                {/* Studio Tier */}
-                <div className={`border rounded-lg p-4 ${
-                  subscription?.tier === 'studio' ? 'border-gray-700 border-2' : 'border-gray-200'
-                }`}>
-                  <h4 className="font-medium text-gray-900 mb-2">Studio</h4>
-                  <div className="text-2xl font-bold text-gray-900 mb-2">€49<span className="text-sm font-normal text-gray-600">/mes</span></div>
-                  <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      10 places d'equip incloses
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Projectes il·limitats
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Accés a l'API
-                    </li>
-                    <li className="flex items-center">
-                      <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                      Tauler d'equip
-                    </li>
-                  </ul>
-                  <button 
-                    onClick={() => handleUpgradeSubscription('studio')}
-                    disabled={subscriptionLoading || (subscription?.tier === 'studio')}
-                    className={`w-full py-2 px-4 rounded-md transition duration-200 ${
-                      subscription?.tier === 'studio' 
-                        ? 'bg-gray-400 cursor-not-allowed text-white' 
-                        : 'bg-gray-700 hover:bg-gray-800 text-white'
-                    }`}
-                  >
-                    {subscriptionLoading ? t('common.loading') : 
-                     subscription?.tier === 'studio' ? 'Pla actual' : 
-                     'Actualitzar a Studio'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Subscription Management Actions */}
-              {!subscriptionLoading && subscription && subscription.tier !== 'free' && subscription.status === 'active' && (
-                <div className="border-t border-gray-200 pt-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">{t('subscription.management.title')}</h4>
-                      <p className="text-sm text-gray-500">{t('subscription.management.description')}</p>
+                      {(subscription.tier === 'pro' || subscription.tier === 'studio' || subscription.tier === 'beta') && (
+                        <div>
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">PDFs pujats</div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {subscription.current_uploads || 0}
+                            <span className="text-sm font-normal text-gray-500">
+                              {subscription.custom_uploads_per_month !== null && subscription.custom_uploads_per_month !== -1
+                                ? ` / ${subscription.custom_uploads_per_month}` : ' / ∞'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <button 
-                      onClick={handleCancelSubscription}
-                      disabled={subscriptionLoading}
-                      className="mt-4 sm:mt-0 px-4 py-2 border border-red-300 text-red-700 hover:bg-red-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {subscriptionLoading ? t('common.loading') : t('subscription.management.cancelButton')}
-                    </button>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {/* Support Section */}
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">{t('subscription.support.title')}</h4>
-                    <p className="text-sm text-gray-500">{t('subscription.support.description')}</p>
-                  </div>
-                  <button className="mt-4 sm:mt-0 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-200">
-                    {t('subscription.support.button')}
+                  <button
+                    onClick={() => navigate('/subscription')}
+                    className="w-full py-2.5 px-4 bg-cte-primary hover:bg-cte-primary-dark text-white font-medium rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    Gestiona la subscripció
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
-              </div>
-
-              {/* BACKEND API INTEGRATION: Subscription Section */}
-              {/* 
-                TODO: Implement backend API integration for subscription management:
-                
-                1. SUBSCRIPTION STATUS API:
-                   - GET /subscription/status - Fetch current subscription details
-                   - Response: { plan: 'free|personal|corporate', status: 'active|canceled', expires_at: 'date' }
-                
-                2. PLAN UPGRADE API:
-                   - POST /subscription/upgrade - Initiate plan upgrade
-                   - Body: { target_plan: 'personal|corporate', payment_method_id: 'stripe_pm_id' }
-                   - Response: { success: boolean, checkout_url?: string, subscription_id?: string }
-                
-                3. USAGE STATISTICS API:
-                   - GET /subscription/usage - Get current usage stats
-                   - Response: { documents_used: number, documents_limit: number, questions_asked: number, storage_used: number }
-                
-                4. BILLING HISTORY API:
-                   - GET /subscription/billing-history - Get payment history
-                   - Response: { invoices: [{ id, amount, date, status, download_url }] }
-                
-                5. CANCELLATION API:
-                   - POST /subscription/cancel - Cancel current subscription
-                   - Response: { success: boolean, cancel_date: 'date', access_until: 'date' }
-                
-                6. STRIPE INTEGRATION:
-                   - Webhook handling for subscription events
-                   - Payment method management
-                   - Invoice generation and management
-                
-                FRONTEND IMPLEMENTATION NOTES:
-                - Load subscription data on component mount
-                - Real-time usage updates
-                - Plan comparison with current usage
-                - Upgrade flow integration with Stripe
-                - Billing history with download links
-              */}
+              )}
             </div>
           )}
 
@@ -1605,195 +1038,37 @@ const UserAccountPage = () => {
           {activeTab === 'billing' && (
             <div className="p-6">
               <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('billing.title')}</h2> {/* Translation key: Billing & Payments */}
-                <p className="text-gray-600">{t('billing.description')}</p> {/* Translation key: Manage your payment methods and view billing history */}
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Facturació i pagaments</h2>
+                <p className="text-gray-600">Gestiona la teva subscripció, mètodes de pagament i historial de factures.</p>
               </div>
 
-              {/* Payment Method */}
+              {/* Stripe Customer Portal link */}
+              <div className="border border-gray-200 rounded-lg p-6 mb-6 flex items-start gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Portal de client</h3>
+                  <p className="text-sm text-gray-600">
+                    Accedeix al portal de Stripe per gestionar el mètode de pagament, descarregar factures i cancel·lar la subscripció.
+                  </p>
+                </div>
+                <a
+                  href="https://billing.stripe.com/p/login/test_00000000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 px-4 py-2 bg-cte-primary text-white rounded-md text-sm font-medium hover:bg-cte-primary-dark transition"
+                >
+                  Obrir portal →
+                </a>
+              </div>
+
+              {/* Placeholder for future invoice list */}
               <div className="border border-gray-200 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('billing.paymentMethod.title')}</h3> {/* Translation key: Payment Method */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-10 h-6 bg-blue-600 rounded flex items-center justify-center mr-3">
-                        <span className="text-white text-xs font-bold">VISA</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">•••• •••• •••• 4242</p>
-                        <p className="text-xs text-gray-500">{t('billing.paymentMethod.card.expires', { month: '12', year: '25' })}</p> {/* Translation key: Expires {{month}}/{{year}} */}
-                      </div>
-                    </div>
-                    <button className="text-cte-primary hover:text-cte-primary-dark text-sm font-medium">
-                      {t('billing.paymentMethod.update')}
-                    </button>
-                  </div>
-                </div>
-                <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition duration-200">
-                  {t('billing.paymentMethod.add')}
-                </button>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Historial de factures</h3>
+                <p className="text-sm text-gray-500">
+                  Per ara, descarrega les factures directament des del portal de Stripe (botó de dalt).
+                  Aviat podràs consultar-les aquí.
+                </p>
               </div>
 
-              {/* Billing History */}
-              <div className="border border-gray-200 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('billing.billingHistory.title')}</h3> {/* Translation key: Billing History */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('billing.billingHistory.table.date')}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('billing.billingHistory.table.description')}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('billing.billingHistory.table.amount')}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('billing.billingHistory.table.status')}
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {t('billing.billingHistory.table.actions')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          Jan 15, 2024
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ArquiNorma Personal Plan
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          €19.99
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {t('billing.billingHistory.status.paid')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-cte-primary hover:text-cte-primary-dark">
-                            {t('billing.billingHistory.table.download')}
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          Dec 15, 2023
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ArquiNorma Personal Plan
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          €19.99
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {t('billing.billingHistory.status.paid')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-cte-primary hover:text-cte-primary-dark">
-                            {t('billing.billingHistory.table.download')}
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Billing Information */}
-              <div className="border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">{t('billing.billingInformation.title')}</h3> {/* Translation key: Billing Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('billing.billingInformation.companyName.label')}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={t('billing.billingInformation.companyName.placeholder')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-cte-primary focus:border-cte-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t('billing.billingInformation.vatNumber.label')}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={t('billing.billingInformation.vatNumber.placeholder')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-cte-primary focus:border-cte-primary"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('billing.billingInformation.billingAddress.label')}
-                  </label>
-                  <textarea
-                    rows="3"
-                    placeholder={t('billing.billingInformation.billingAddress.placeholder')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-cte-primary focus:border-cte-primary"
-                  ></textarea>
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <button className="px-4 py-2 bg-cte-primary hover:bg-cte-primary-dark text-white rounded-md transition duration-200">
-                    {t('billing.billingInformation.saveButton')}
-                  </button>
-                </div>
-              </div>
-
-              {/* BACKEND API INTEGRATION: Billing Section */}
-              {/* 
-                TODO: Implement backend API integration for billing management:
-                
-                1. PAYMENT METHODS API:
-                   - GET /billing/payment-methods - List user's payment methods
-                   - POST /billing/payment-methods - Add new payment method
-                   - PUT /billing/payment-methods/{id} - Update payment method
-                   - DELETE /billing/payment-methods/{id} - Remove payment method
-                   - Response: { payment_methods: [{ id, type, last4, brand, expiry_month, expiry_year, is_default }] }
-                
-                2. BILLING HISTORY API:
-                   - GET /billing/invoices - Get invoice history
-                   - GET /billing/invoices/{id}/download - Download invoice PDF
-                   - Response: { invoices: [{ id, amount, currency, status, created_at, download_url }] }
-                
-                3. BILLING INFORMATION API:
-                   - GET /billing/information - Get billing address and tax info
-                   - PUT /billing/information - Update billing information
-                   - Body: { company_name, vat_number, billing_address, tax_id }
-                   - Response: { company_name, vat_number, billing_address, tax_rate }
-                
-                4. STRIPE INTEGRATION:
-                   - Stripe Customer object management
-                   - Payment method tokenization
-                   - Invoice generation and retrieval
-                   - Tax calculation with Stripe Tax
-                   - Webhook handling for payment events
-                
-                5. TAX CALCULATION API:
-                   - POST /billing/calculate-tax - Calculate tax for billing address
-                   - Body: { billing_address: { country, state, city, postal_code } }
-                   - Response: { tax_rate, tax_amount, currency }
-                
-                6. FAILED PAYMENT HANDLING:
-                   - GET /billing/failed-payments - Get failed payment attempts
-                   - POST /billing/retry-payment - Retry failed payment
-                   - Response: { success: boolean, error_message?: string }
-                
-                FRONTEND IMPLEMENTATION NOTES:
-                - Load billing data on component mount
-                - Real-time payment method updates
-                - Invoice download with progress indicators
-                - Billing address validation
-                - Tax calculation preview
-                - Failed payment retry functionality
-              */}
             </div>
           )}
         </div>
@@ -1806,7 +1081,7 @@ const UserAccountPage = () => {
           setIsCheckoutOpen(false);
           setSelectedUpgradeTier(null);
           // Reload subscription status in case user completed payment
-          loadSubscriptionStatus();
+          loadSubscription();
         }}
         currentTier={subscription?.tier || 'free'}
         preselectedTier={selectedUpgradeTier}

@@ -129,17 +129,7 @@ const FormattedResponse = ({ text }) => {
  */
 const ChatPage = () => {
   // Chat state management
-  const [messages, setMessages] = useState([
-    {
-      id: 'welcome-bot-message',
-      sender: 'bot',
-      text: 'Hola! Sóc ArquiNorma, el vostre assistent per a normatives d\'arquitectura. Podeu fer-me preguntes sobre codis d\'edificació, regulacions i normatives tècniques.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      quotes: [],
-      confidence: 'High'
-    }
-  ]);
-  
+  const [messages, setMessages] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -147,6 +137,8 @@ const ChatPage = () => {
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   
   // Reference to input field and messages container
   const inputRef = useRef(null);
@@ -156,15 +148,14 @@ const ChatPage = () => {
   // Backend API configuration
   const API_BASE_URL = env.api.baseUrl;
   
-  // Debug: Expose API URL to window for console debugging
-  if (typeof window !== 'undefined') {
+  // Debug info only exposed in local development builds
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
     window.__ARQUINORMA_DEBUG__ = {
       apiBaseUrl: API_BASE_URL,
       env: import.meta.env.MODE,
       backendUrl: import.meta.env.VITE_BACKEND_URL,
       timestamp: new Date().toISOString()
     };
-    console.log('🔧 ArquiNorma Debug Info:', window.__ARQUINORMA_DEBUG__);
   }
 
   /**
@@ -174,6 +165,15 @@ const ChatPage = () => {
     loadUserData();
     checkRateLimits();
   }, []);
+
+  /**
+   * Effect to load CTE messages when user is authenticated
+   */
+  useEffect(() => {
+    if (user && !messagesLoaded) {
+      loadCTEMessages();
+    }
+  }, [user, messagesLoaded]);
 
   /**
    * Effect to focus input field when component mounts
@@ -217,6 +217,185 @@ const ChatPage = () => {
     } catch (error) {
       console.error('Error loading user data:', error);
       setSubscription({ level: 'free' });
+    }
+  };
+
+  /**
+   * Load CTE chat messages from database
+   */
+  const loadCTEMessages = async () => {
+    try {
+      console.log('📖 Loading CTE messages from database...');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('⚠️ No session, showing welcome message only');
+        setMessages([getWelcomeMessage()]);
+        setMessagesLoaded(true);
+        return;
+      }
+
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/cte/messages`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`✅ Loaded ${data.length} CTE messages`);
+
+      // Convert database messages to UI format
+      const uiMessages = data.map(msg => ({
+        id: msg.id,
+        sender: msg.role === 'user' ? 'user' : 'bot',
+        text: msg.content,
+        timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        quotes: msg.quotes || [],
+        confidence: msg.confidence
+      }));
+
+      // If no messages, show welcome message
+      if (uiMessages.length === 0) {
+        setMessages([getWelcomeMessage()]);
+      } else {
+        setMessages(uiMessages);
+      }
+      
+      setMessagesLoaded(true);
+    } catch (error) {
+      console.error('❌ Error loading CTE messages:', error);
+      // On error, show welcome message
+      setMessages([getWelcomeMessage()]);
+      setMessagesLoaded(true);
+    }
+  };
+
+  /**
+   * Get welcome message based on locale
+   */
+  const getWelcomeMessage = () => {
+    const welcomeMessages = {
+      ca: 'Hola! Sóc ArquiNorma, el vostre assistent per a normatives d\'arquitectura. Podeu fer-me preguntes sobre codis d\'edificació, regulacions i normatives tècniques.',
+      es: 'Hola! Soy ArquiNorma, tu asistente para normativas de arquitectura. Puedes preguntarme sobre códigos de edificación, regulaciones y normativas técnicas.',
+      en: 'Hello! I\'m ArquiNorma, your assistant for architecture regulations. You can ask me about building codes, regulations and technical standards.'
+    };
+    
+    return {
+      id: 'welcome-bot-message',
+      sender: 'bot',
+      text: welcomeMessages[locale] || welcomeMessages.ca,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      quotes: [],
+      confidence: 'High'
+    };
+  };
+
+  /**
+   * Save a message to the database and update state with the real DB id
+   */
+  const saveCTEMessage = async (messageData) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/cte/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          role: messageData.sender === 'user' ? 'user' : 'assistant',
+          content: messageData.text,
+          quotes: messageData.quotes || [],
+          confidence: messageData.confidence || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const saved = await response.json();
+
+      // Update the local message with the real DB id so delete works
+      setMessages(prev =>
+        prev.map(m => m.id === messageData.id ? { ...m, dbId: saved.id } : m)
+      );
+
+      return saved;
+    } catch (error) {
+      console.error('❌ Error saving CTE message:', error);
+      return null;
+    }
+  };
+
+  /**
+   * Delete a single message by its database id
+   */
+  const deleteCTEMessage = async (dbId, localId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/cte/messages/${dbId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // Remove the message from local state
+      setMessages(prev => prev.filter(m => m.id !== localId));
+    } catch (error) {
+      console.error('❌ Error deleting CTE message:', error);
+      setError('Error esborrant el missatge. Si us plau, torna-ho a provar.');
+    }
+  };
+
+  /**
+   * Clear all CTE chat messages
+   */
+  const clearCTEMessages = async () => {
+    try {
+      console.log('🗑️  Clearing all CTE messages...');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('⚠️ No session');
+        return;
+      }
+
+      const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+      const response = await fetch(`${baseUrl}/api/cte/messages`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Cleared messages:', result);
+
+      // Reset to welcome message
+      setMessages([getWelcomeMessage()]);
+      setShowClearConfirm(false);
+    } catch (error) {
+      console.error('❌ Error clearing CTE messages:', error);
+      setError('Error esborrant els missatges. Si us plau, torna-ho a provar.');
     }
   };
 
@@ -378,6 +557,9 @@ const ChatPage = () => {
     setIsLoading(true);
     setError('');
 
+    // Save user message to database (async, don't wait)
+    saveCTEMessage(userMessage);
+
     try {
       // Send question to backend
       const response = await sendQuestionToBackend(userQuestion);
@@ -394,6 +576,9 @@ const ChatPage = () => {
       
       setMessages(prevMessages => [...prevMessages, botMessage]);
       
+      // Save bot message to database (async, don't wait)
+      saveCTEMessage(botMessage);
+      
       // Update rate limit info
       await checkRateLimits();
       
@@ -404,9 +589,7 @@ const ChatPage = () => {
       const fallbackMessage = {
         id: `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         sender: 'bot',
-        text: locale === 'ca' 
-          ? 'Em sap greu, no puc donar-te una resposta ja que l\'assisten no està disponible ara mateix. Si us plau, torna a provar-ho d\'aqui a uns minuts.'
-          : 'Lo siento, no puedo darte una respuesta ya que el asistente no está disponible ahora mismo. Por favor, vuelve a intentarlo en unos minutos.',
+        text: 'Em sap greu, no puc donar-te una resposta ja que l\'assisten no està disponible ara mateix. Si us plau, torna a provar-ho d\'aqui a uns minuts.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         quotes: [],
         confidence: 'Low',
@@ -414,6 +597,8 @@ const ChatPage = () => {
       };
       
       setMessages(prevMessages => [...prevMessages, fallbackMessage]);
+      
+      // Don't save fallback messages to database
       
       // Remove the fallback message after 10 seconds
       setTimeout(() => {
@@ -451,20 +636,22 @@ const ChatPage = () => {
   const handleLocaleChange = (newLocale) => {
     setLocale(newLocale);
     
-    // Update welcome message based on locale
-    const welcomeMessages = {
-      ca: 'Hola! Sóc ArquiNorma, el vostre assistent per a normatives d\'arquitectura. Podeu fer-me preguntes sobre codis d\'edificació, regulacions i normatives tècniques.',
-      es: 'Hola! Soy ArquiNorma, tu asistente para normativas de arquitectura. Puedes preguntarme sobre códigos de edificación, regulaciones y normativas técnicas.',
-      en: 'Hello! I\'m ArquiNorma, your assistant for architecture regulations. You can ask me about building codes, regulations and technical standards.'
-    };
-    
-    setMessages(prevMessages => [
-      {
-        ...prevMessages[0],
-        text: welcomeMessages[newLocale] || welcomeMessages.ca
-      },
-      ...prevMessages.slice(1)
-    ]);
+    // Update welcome message based on locale if it's the first message
+    if (messages.length > 0 && messages[0].id === 'welcome-bot-message') {
+      const welcomeMessages = {
+        ca: 'Hola! Sóc ArquiNorma, el vostre assistent per a normatives d\'arquitectura. Podeu fer-me preguntes sobre codis d\'edificació, regulacions i normatives tècniques.',
+        es: 'Hola! Soy ArquiNorma, tu asistente para normativas de arquitectura. Puedes preguntarme sobre códigos de edificación, regulaciones y normativas técnicas.',
+        en: 'Hello! I\'m ArquiNorma, your assistant for architecture regulations. You can ask me about building codes, regulations and technical standards.'
+      };
+      
+      setMessages(prevMessages => [
+        {
+          ...prevMessages[0],
+          text: welcomeMessages[newLocale] || welcomeMessages.ca
+        },
+        ...prevMessages.slice(1)
+      ]);
+    }
   };
 
   /**
@@ -539,8 +726,13 @@ const ChatPage = () => {
   /**
    * Render message bubble
    */
-  const renderMessage = (message) => (
-    <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-6`}>
+  const renderMessage = (message) => {
+    // A message is deletable if it has a real DB id (uuid, not a local temp id)
+    const isDeletable = message.dbId || (!message.id.startsWith('user-') && !message.id.startsWith('bot-') && !message.id.startsWith('welcome-') && !message.id.startsWith('fallback-'));
+    const dbId = message.dbId || (isDeletable ? message.id : null);
+
+    return (
+    <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-6 group`}>
       <div className={`max-w-xs lg:max-w-md ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
         {/* Message bubble */}
         <div className={`px-4 py-3 rounded-2xl shadow-sm ${
@@ -595,29 +787,35 @@ const ChatPage = () => {
             </div>
           )}
           
-          <div className="flex items-center justify-between mt-2">
+          <div className="mt-2 flex items-center justify-between">
             <div className={`text-xs ${
               message.sender === 'user' ? 'text-white text-opacity-75' : 
               message.is_fallback ? 'text-yellow-600' : 'text-gray-400'
             }`}>
               {message.timestamp}
             </div>
-            {message.confidence && message.sender === 'bot' && (
-              <div className={`text-xs px-2 py-1 rounded-full ${
-                message.confidence === 'High' ? 'bg-green-100 text-green-800' :
-                message.confidence === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {message.confidence === 'High' ? 'Alta confiança' :
-                 message.confidence === 'Medium' ? 'Confiança mitjana' :
-                 'Baixa confiança'}
-              </div>
+            {/* Delete button — visible on hover, only for DB-persisted messages */}
+            {isDeletable && dbId && (
+              <button
+                onClick={() => deleteCTEMessage(dbId, message.id)}
+                title="Esborrar missatge"
+                className={`opacity-0 group-hover:opacity-100 transition-opacity ml-2 ${
+                  message.sender === 'user'
+                    ? 'text-white text-opacity-60 hover:text-opacity-100'
+                    : 'text-gray-400 hover:text-red-500'
+                }`}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             )}
           </div>
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-50">
@@ -627,15 +825,29 @@ const ChatPage = () => {
         <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">ArquiNorma Chat</h1>
-              <p className="text-sm text-gray-600">Assistent per a normatives d'arquitectura</p>
+              <h1 className="text-2xl font-semibold text-gray-900">CTE Xat</h1>
+              <p className="text-sm text-gray-600">Assistent per al Codi Tècnic</p>
             </div>
             <div className="flex items-center space-x-4">
               {/* Subscription status */}
               {subscription && renderSubscriptionStatus()}
               
-              {/* Locale selector */}
-              <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+              {/* Clear Chat button */}
+              {user && messages.length > 1 && (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="px-3 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors flex items-center space-x-1"
+                  title="Esborrar xat"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  <span>Esborrar xat</span>
+                </button>
+              )}
+              
+              {/* Locale selector - Hidden for now */}
+              {/* <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                 {['ca', 'es'].map((loc) => (
                   <button
                     key={loc}
@@ -649,10 +861,38 @@ const ChatPage = () => {
                     {loc === 'ca' ? 'Català' : 'Español'}
                   </button>
                 ))}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
+
+        {/* Clear Chat Confirmation Dialog */}
+        {showClearConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Esborrar xat
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Estàs segur que vols esborrar tot el xat del CTE? Aquesta acció no es pot desfer.
+              </p>
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  Cancel·lar
+                </button>
+                <button
+                  onClick={clearCTEMessages}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                >
+                  Esborrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -692,7 +932,7 @@ const ChatPage = () => {
                 value={currentQuestion}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={locale === 'ca' ? 'Feu una pregunta sobre normatives...' : 'Haz una pregunta sobre normativas...'}
+                placeholder="Feu una pregunta sobre normatives..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-cte-primary focus:border-cte-primary transition duration-200 text-sm"
                 rows="2"
                 disabled={isLoading}
@@ -711,14 +951,14 @@ const ChatPage = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {locale === 'ca' ? 'Enviant...' : 'Enviando...'}
+                  Enviant...
                 </>
               ) : (
                 <>
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                   </svg>
-                  {locale === 'ca' ? 'Enviar' : 'Enviar'}
+                  Enviar
                 </>
               )}
             </button>
@@ -726,7 +966,7 @@ const ChatPage = () => {
           
           {/* Helper text */}
           <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-            <span>{locale === 'ca' ? 'Premeu Enter per enviar, Shift+Enter per nova línia' : 'Presiona Enter para enviar, Shift+Enter para nueva línea'}</span>
+            <span>Premeu Enter per enviar, Shift+Enter per nova línia</span>
             <span>{currentQuestion.length}/500</span>
           </div>
         </div>

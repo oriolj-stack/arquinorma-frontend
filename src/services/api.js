@@ -5,8 +5,8 @@
  * Handles authentication, error handling, and base URL configuration.
  */
 
-import { env } from '../config/env';
 import { supabase } from '../supabaseClient';
+import { env } from '../config/env';
 
 /**
  * Get the backend API base URL
@@ -34,54 +34,55 @@ export const getAuthHeaders = async () => {
   const headers = {
     'Content-Type': 'application/json',
   };
-  
-  // In dev mode, check if we're using a dev user and use dev token
-  if (env.app.isDevelopment) {
-    const devUser = localStorage.getItem('dev_staff_user');
-    if (devUser) {
-      const parsedUser = JSON.parse(devUser);
-      // Use staff dev token for staff users, admin dev token for admin users
-      const devToken = parsedUser.role === 'admin' || parsedUser.role === 'super_admin'
-        ? 'admin_dev_token_123'
-        : 'staff_dev_token_123';
-      headers['Authorization'] = `Bearer ${devToken}`;
-      console.log('🔑 Using dev token for API authentication:', devToken);
-      return headers;
-    }
-  }
-  
-  // Regular Supabase session
+
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (session?.access_token) {
     headers['Authorization'] = `Bearer ${session.access_token}`;
   }
-  
+
   return headers;
 };
 
 /**
- * Make an authenticated API request
+ * Make an authenticated API request.
+ * - Adds a 30-second abort timeout so a hung backend never freezes the UI.
+ * - Intercepts 401 responses and signs the user out, then reloads to /login.
+ *
  * @param {string} endpoint - API endpoint (e.g., '/api/towns')
- * @param {object} options - Fetch options
+ * @param {object} options  - Fetch options
+ * @param {number} [timeoutMs=30000] - Request timeout in milliseconds
  * @returns {Promise<Response>}
  */
-export const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}, timeoutMs = 30_000) => {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}${endpoint}`;
-  
+
   const headers = await getAuthHeaders();
-  
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...headers,
-      ...options.headers,
-    },
-    credentials: 'include',
-  });
-  
-  return response;
+
+  const controller = new AbortController();
+  const timerId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: { ...headers, ...options.headers },
+      credentials: 'include',
+      signal: controller.signal,
+    });
+
+    // Global 401 handler — expired/invalid token → sign out and redirect
+    if (response.status === 401) {
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+      // Return a never-resolving promise so callers don't need to handle this
+      return new Promise(() => {});
+    }
+
+    return response;
+  } finally {
+    clearTimeout(timerId);
+  }
 };
 
 /**

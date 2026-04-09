@@ -183,6 +183,11 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
     // Town validation
     if (!formData.town) {
       errors.town = 'El municipi és obligatori';
+    } else {
+      const selectedTown = towns.find(t => t.name === formData.town);
+      if (selectedTown && selectedTown.is_available === false) {
+        errors.town = 'Aquest municipi encara no està disponible a ArquiNorma';
+      }
     }
     
     setFormErrors(errors);
@@ -412,11 +417,32 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
               <option value="">
                 {loadingTowns ? 'Carregant municipis...' : 'Seleccioneu el municipi'}
               </option>
-              {towns.map((town) => (
-                <option key={town.name} value={town.name}>
-                  {town.name}
-                </option>
-              ))}
+              {(() => {
+                const available = towns.filter(t => t.is_available !== false);
+                const pending = towns.filter(t => t.is_available === false);
+                return (
+                  <>
+                    {available.length > 0 && (
+                      <optgroup label="Municipis disponibles">
+                        {available.map((town) => (
+                          <option key={town.id || town.name} value={town.name}>
+                            {town.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {pending.length > 0 && (
+                      <optgroup label="Pendent d'incorporació">
+                        {pending.map((town) => (
+                          <option key={town.id || town.name} value={town.name} disabled style={{ color: '#9ca3af' }}>
+                            {town.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </>
+                );
+              })()}
             </select>
             {formErrors.town && (
               <p className="mt-1 text-sm text-red-600">{formErrors.town}</p>

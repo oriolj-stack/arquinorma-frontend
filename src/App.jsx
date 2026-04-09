@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } f
 import LoginPage from '/src/pages/LoginPage';
 import SignupPage from '/src/pages/SignupPage';
 import ChatPage from '/src/pages/ChatPage';
-import PaymentPage from '/src/pages/PaymentPage';
 import PricingPage from '/src/pages/PricingPage';
 import UserAccountPage from '/src/pages/UserAccountPage';
 import ProjectsPage from '/src/pages/ProjectsPage';
@@ -23,6 +22,13 @@ import AdminWaitingListPage from '/src/pages/AdminWaitingListPage';
 import AdminBetaConfirmedPage from '/src/pages/AdminBetaConfirmedPage';
 import AdminBetaCandidatesPage from '/src/pages/AdminBetaCandidatesPage';
 import EarlyAccessElite7f4a from '/src/pages/EarlyAccessElite7f4a';
+import PrivateDocumentsPage from '/src/pages/PrivateDocumentsPage';
+import StudioRoute from '/src/components/StudioRoute';
+import StaffRoute from '/src/components/StaffRoute';
+import ForgotPasswordPage from '/src/pages/ForgotPasswordPage';
+import ResetPasswordPage from '/src/pages/ResetPasswordPage';
+import ErrorBoundary from '/src/components/ErrorBoundary';
+import { Toaster } from 'sonner';
 
 /**
  * Navigation Bar Component
@@ -50,6 +56,8 @@ const NavigationBar = ({ user, onLogout }) => {
       location.pathname === '/' ||
       location.pathname === '/subscription' ||
       location.pathname === '/private-beta' ||
+      location.pathname === '/forgot-password' ||
+      location.pathname === '/reset-password' ||
       location.pathname.startsWith('/staff') || 
       location.pathname.startsWith('/admin') || 
       !user) {
@@ -360,18 +368,16 @@ function App() {
   const handleLogout = async () => {
     try {
       setLoading(true);
-      
+
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         console.error('Error signing out:', error);
         setAuthError('Failed to sign out. Please try again.');
       } else {
-        setUser(null);
+        // setUser(null) is called by onAuthStateChange (SIGNED_OUT event).
+        // Protected routes will redirect to '/' automatically once user is null.
         setAuthError(null);
-        console.log('User signed out successfully');
-        // Redirect to landing page after successful logout
-        window.location.href = '/';
       }
     } catch (error) {
       console.error('Unexpected error during logout:', error);
@@ -425,6 +431,7 @@ function App() {
 
   return (
     <Router>
+      <Toaster position="top-right" richColors closeButton />
       <div className="min-h-screen bg-gray-100">
         {/* Navigation Bar - shown for authenticated users (except on login page) */}
         <NavigationBar user={user} onLogout={handleLogout} />
@@ -466,6 +473,16 @@ function App() {
               } 
             />
 
+            {/* PUBLIC ROUTES: Password reset flow */}
+            <Route
+              path="/forgot-password"
+              element={user ? <Navigate to="/chat" replace /> : <ForgotPasswordPage />}
+            />
+            <Route
+              path="/reset-password"
+              element={<ResetPasswordPage />}
+            />
+
             {/* 
               PROTECTED ROUTE: Chat Page
               - Main chat interface for document Q&A
@@ -473,62 +490,47 @@ function App() {
               - Redirects unauthenticated users to /login
               - Uses ChatBox and CitationList components
             */}
-            <Route 
-              path="/chat" 
+            <Route
+              path="/chat"
               element={
                 <ProtectedRoute user={user}>
-                  <ChatPage />
+                  <ErrorBoundary label="xat CTE">
+                    <ChatPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
-              } 
+              }
+            />
+
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute user={user}>
+                  <ErrorBoundary label="projectes">
+                    <ProjectsPage />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/projects/:id/chat"
+              element={
+                <ProtectedRoute user={user}>
+                  <ErrorBoundary label="xat del projecte">
+                    <ProjectChatPage />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              }
             />
 
             {/* 
-              PROTECTED ROUTE: Projects Page
-              - Displays user's architectural projects in a responsive grid
-              - Each project card shows title, type, location, and creation date
-              - Clickable cards navigate to project-specific chat pages
-              - Includes "New Project" button for project creation
-              - Only accessible to authenticated users
+              LEGACY REDIRECT: /payment → /subscription
+              PaymentPage was a stub with hardcoded old plans.
+              All subscription management is handled by SubscriptionPage.
             */}
-            <Route 
-              path="/projects" 
-              element={
-                <ProtectedRoute user={user}>
-                  <ProjectsPage />
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* 
-              PROTECTED ROUTE: Project Chat Page
-              - Project-specific chat interface for AI conversations
-              - Displays project context and chat history
-              - Handles project-based Q&A with persistent messages
-              - Only accessible to authenticated users who own the project
-            */}
-            <Route 
-              path="/projects/:id/chat" 
-              element={
-                <ProtectedRoute user={user}>
-                  <ProjectChatPage />
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* 
-              PROTECTED ROUTE: Payment Page
-              - Stripe payment interface for subscriptions
-              - Only accessible to authenticated users
-              - Provides secure payment processing
-              - Handles subscription upgrades and billing
-            */}
-            <Route 
-              path="/payment" 
-              element={
-                <ProtectedRoute user={user}>
-                  <PaymentPage />
-                </ProtectedRoute>
-              } 
+            <Route
+              path="/payment"
+              element={<Navigate to="/subscription" replace />}
             />
 
             {/* 
@@ -576,6 +578,24 @@ function App() {
               } 
             />
 
+            {/*
+              PROTECTED ROUTE: Private Documents (Studio tier only)
+              - PDF upload and management for Studio subscribers
+              - Guarded by StudioRoute which checks subscription tier
+            */}
+            <Route
+              path="/private-documents"
+              element={
+                <ProtectedRoute user={user}>
+                  <StudioRoute>
+                    <ErrorBoundary label="documents privats">
+                      <PrivateDocumentsPage />
+                    </ErrorBoundary>
+                  </StudioRoute>
+                </ProtectedRoute>
+              }
+            />
+
             {/* 
               STAFF ROUTES: Staff authentication and admin panel
               - /staff/login: Staff authentication page
@@ -588,25 +608,25 @@ function App() {
 
             <Route 
               path="/admin/upload" 
-              element={<AdminUploadPage />} 
+              element={<StaffRoute><AdminUploadPage /></StaffRoute>} 
             />
 
             <Route 
               path="/admin/list" 
-              element={<AdminListPage />} 
+              element={<StaffRoute><AdminListPage /></StaffRoute>} 
             />
 
             <Route 
               path="/admin/waiting-list" 
-              element={<AdminWaitingListPage />} 
+              element={<StaffRoute><AdminWaitingListPage /></StaffRoute>} 
             />
             <Route 
               path="/admin/beta/confirmed" 
-              element={<AdminBetaConfirmedPage />} 
+              element={<StaffRoute><AdminBetaConfirmedPage /></StaffRoute>} 
             />
             <Route 
               path="/admin/beta/candidates" 
-              element={<AdminBetaCandidatesPage />} 
+              element={<StaffRoute><AdminBetaCandidatesPage /></StaffRoute>} 
             />
 
             {/* 

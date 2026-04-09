@@ -3,10 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { env } from '../config/env';
 import { submitBetaTesterEmail, validateEmail } from '../services/betaTestersService';
+import { PRICING_TIERS } from '../config/pricingConfig';
 
 /**
  * PricingPage Component for ArquiNorma
- * 
+ *
  * Comprehensive pricing page inspired by Factorial, ElevenLabs, and best practices.
  * Features:
  * - Clear pricing tiers with detailed features
@@ -16,65 +17,6 @@ import { submitBetaTesterEmail, validateEmail } from '../services/betaTestersSer
  * - Social proof
  * - Mobile responsive
  */
-
-// Pricing tiers configuration - matching LandingPage data
-const PRICING_TIERS = [
-    {
-      id: 'basic',
-    name: 'Bàsic',
-      price: 5.99,
-    description: 'Per a projectes individuals',
-      features: [
-      { name: 'Projectes actius', value: '5', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: null, included: false },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport per correu', value: true, included: true },
-      { name: 'Assistent de Concursos', value: false, included: false },
-      { name: 'Comparació de documents', value: false, included: false },
-      { name: 'Area privada d\'estudi', value: null, included: false },
-    ],
-    cta: 'Començar amb Bàsic',
-    popular: false
-    },
-    {
-      id: 'pro',
-    name: 'Professional',
-      price: 14.99,
-    description: 'Per a professionals exigents',
-    popular: true,
-      features: [
-      { name: 'Projectes actius', value: '15', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: '20/mes', included: true },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport prioritari', value: true, included: true },
-      { name: 'Assistent per a concursos', value: true, included: true },
-      { name: 'Comparació de documents', value: true, included: true },
-      { name: 'Area privada d\'estudi', value: null, included: false },
-    ],
-    cta: 'Començar amb Pro'
-    },
-    {
-      id: 'studio',
-    name: 'Estudi',
-      price: 49.00,
-    description: 'Per a equips i estudis',
-      features: [
-      { name: 'Projectes actius', value: 'Il·limitats', included: true },
-      { name: 'Preguntes a l\'IA', value: 'Il·limitades', included: true },
-      { name: 'Documents personalitzats', value: 'Il·limitats', included: true },
-      { name: 'Accés a tota la normativa', value: true, included: true },
-      { name: 'Suport dedicat', value: true, included: true },
-      { name: 'Gestió de concursos', value: true, included: true },
-      { name: 'Comparació de documents', value: true, included: true },
-      { name: 'Area privada d\'estudi', value: true, included: true },
-      { name: 'Membres d\'equip', value: '10 inclosos', included: true },
-    ],
-    cta: 'Contactar vendes',
-    popular: false
-  }
-];
 
 // FAQ items for pricing page
 const PRICING_FAQ = [
@@ -182,6 +124,7 @@ const PricingPage = () => {
     } catch (err) {
       console.error('Error creating checkout session:', err);
       setError(err.message || 'Hi ha hagut un error. Torna-ho a provar.');
+    } finally {
       setLoading(false);
     }
   };

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { env } from '../../config/env';
+import { toast } from 'sonner';
 
 // Use the centralized API base URL from env config
 const API_BASE = env.api.baseUrl;
@@ -94,7 +95,7 @@ const TownsTable = () => {
       
     } catch (err) {
       console.error('Error fetching documents:', err);
-      alert('Error al carregar documents. Si us plau, torna-ho a provar.');
+      toast.error('Error al carregar documents. Si us plau, torna-ho a provar.');
     } finally {
       setDocumentsLoading(prev => ({ ...prev, [townId]: false }));
     }

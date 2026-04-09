@@ -42,31 +42,10 @@ const StaffLoginPage = () => {
     }
 
     try {
-      console.log('Staff login attempt...');
-      
-      // Check for development tokens first
-      if (env.app.isDevelopment) {
-        console.log('Development mode detected');
-        const devTokens = {
-          'staff@arquinorma.dev': { token: 'staff_dev_token_123', role: 'staff' },
-          'admin@arquinorma.dev': { token: 'admin_dev_token_123', role: 'admin' }
-        };
-
-        console.log('Checking dev tokens for:', email.trim());
-        if (devTokens[email.trim()] && password === devTokens[email.trim()].token) {
-          console.log('Development token authentication successful');
-          
-          const mockUser = {
-            id: `dev_${devTokens[email.trim()].role}_1`,
-            email: email.trim(),
-            role: devTokens[email.trim()].role,
-            full_name: `${devTokens[email.trim()].role.charAt(0).toUpperCase() + devTokens[email.trim()].role.slice(1)} User`  // ← Fixed: added .role before .slice
-          };
-
-          localStorage.setItem('dev_staff_user', JSON.stringify(mockUser));
-          
-          console.log(`Development ${mockUser.role} login successful:`, mockUser.email);
-          navigate(from, { replace: true });
+      // Always authenticate through Supabase — no dev token bypass
+      if (false) {
+        // Legacy dev-token block removed for security — kept as placeholder
+        navigate(from, { replace: true });
           return;
         } else {
           console.log('Development token check failed');

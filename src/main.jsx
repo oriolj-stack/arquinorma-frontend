@@ -7,6 +7,22 @@ import { stripePromise } from '/src/stripeClient.js';
 // Initialize i18n for internationalization support
 import '/src/i18n.js';
 
+// ── Sentry error tracking ─────────────────────────────────────────────────────
+// Initialised only when VITE_SENTRY_DSN is set in the environment.
+// In local dev leave the variable unset; set it on Vercel for production.
+const _sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (_sentryDsn) {
+  import('@sentry/react').then((Sentry) => {
+    Sentry.init({
+      dsn: _sentryDsn,
+      environment: import.meta.env.MODE,
+      tracesSampleRate: 0.1,
+      sendDefaultPii: false,
+    });
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * ArquiNorma Frontend Entry Point
  * 

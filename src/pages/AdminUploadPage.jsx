@@ -22,23 +22,7 @@ const AdminUploadPage = () => {
   // Check authentication on component mount
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for development user first
-      if (env.app.isDevelopment) {
-        console.log('Checking for development user...');
-        const devUser = localStorage.getItem('dev_staff_user');
-        if (devUser) {
-          console.log('Development user found:', devUser);
-          const parsedUser = JSON.parse(devUser);
-          setUser(parsedUser);
-          return;
-        } else {
-          console.log('No development user found, redirecting to login');
-          navigate('/staff/login');
-          return;
-        }
-      }
-
-      // Regular Supabase authentication
+            // Regular Supabase authentication
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -135,19 +119,9 @@ const AdminUploadPage = () => {
     setSuccess('');
 
     try {
-      let authToken = null;
-
-      // Get authentication token
-      if (env.app.isDevelopment && localStorage.getItem('dev_staff_user')) {
-        // Use development token
-        authToken = 'staff_dev_token_123';
-        console.log('Using development token for upload:', authToken);
-      } else {
-        // Get current session token
-        const { data: { session } } = await supabase.auth.getSession();
-        authToken = session?.access_token;
-        console.log('Using Supabase token for upload');
-      }
+      // Always use the real Supabase session token
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token;
       
       if (!authToken) {
         throw new Error('No hi ha cap token d\'autenticació vàlid');
@@ -162,8 +136,8 @@ const AdminUploadPage = () => {
       console.log('Uploading to backend:', env.api.baseUrl);
       console.log('Auth token (first 20 chars):', authToken.substring(0, 20) + '...');
 
-      // Upload to backend
-      const response = await fetch(`${env.api.baseUrl}/admin/upload`, {
+      // Upload to backend — use the authenticated /api/admin/upload endpoint
+      const response = await fetch(`${env.api.baseUrl}/api/admin/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,

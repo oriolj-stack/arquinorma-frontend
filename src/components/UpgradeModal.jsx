@@ -1,201 +1,202 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 /**
- * UpgradeModal Component for ArquiNorma
+ * UpgradeModal Component
  * 
- * A reusable modal component that prompts users to upgrade their subscription
- * when they hit quota limits or try to access premium features.
+ * Modal that appears when users hit subscription restrictions
+ * Shows feature comparison and upgrade options
  * 
- * Props:
- * - isOpen: Boolean to control modal visibility
- * - onClose: Function to close the modal
- * - tier: Target tier to upgrade to ('pro' or 'studio')
- * - feature: Name of the feature that requires upgrade
- * - currentTier: User's current subscription tier
- * - quotaInfo: Optional quota information (e.g., projects used/limit)
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Whether modal is visible
+ * @param {Function} props.onClose - Close handler
+ * @param {string} props.currentTier - User's current subscription tier
+ * @param {string} props.requiredTier - Minimum tier required for feature
+ * @param {string} props.feature - Feature name that triggered the modal
+ * @param {string} props.message - Custom message to display
  */
-
-const UpgradeModal = ({
-  isOpen,
-  onClose,
-  tier = 'pro',
-  feature = 'this feature',
-  currentTier = 'free',
-  quotaInfo = null
+const UpgradeModal = ({ 
+  isOpen, 
+  onClose, 
+  currentTier = 'free', 
+  requiredTier = 'pro',
+  feature = '',
+  message = ''
 }) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  // Tier configuration
-  const tierConfig = {
-    pro: {
-      name: 'Pro',
-      price: '€14.99/month',
-      benefits: [
-        'Unlimited projects',
-        'Unlimited custom PDF uploads',
-        'Priority embeddings',
-        'Document comparison',
-        'Multi-town projects'
+  const tierFeatures = {
+    basic: {
+      name: 'Bàsic',
+      price: '5,99€/mes',
+      features: [
+        '5 projectes actius',
+        'Preguntes il·limitades a l\'IA',
+        'Accés complet a la normativa',
+        'Suport per correu electrònic'
       ],
-      color: 'green'
+      color: 'blue'
+    },
+    pro: {
+      name: 'Professional',
+      price: '14,99€/mes',
+      features: [
+        'Projectes il·limitats',
+        'Preguntes il·limitades a l\'IA',
+        'Pujades de PDF personalitzats',
+        'Comparació de documents',
+        'Suport prioritari'
+      ],
+      color: 'purple',
+      recommended: true
     },
     studio: {
-      name: 'Studio',
-      price: '€49/month',
-      benefits: [
-        '10 team seats included',
-        'Unlimited projects',
-        'Unlimited custom PDF uploads',
-        'Team dashboard',
-        'Admin controls',
-        'API access'
+      name: 'Estudi',
+      price: '49,00€/mes',
+      features: [
+        'Tot el que inclou Pro',
+        '10 membres de l\'equip',
+        'Accés a l\'API',
+        'Tauler d\'equip',
+        'Controls d\'administrador'
       ],
-      color: 'orange'
+      color: 'green'
     }
   };
 
-  const config = tierConfig[tier] || tierConfig.pro;
-
-  /**
-   * Handle upgrade button click - redirect to subscription page
-   */
-  const handleUpgrade = () => {
-    navigate('/subscription'); // Changed from /pricing to /subscription
+  const handleUpgrade = (tier) => {
+    navigate(`/pricing?selected=${tier}`);
     onClose();
   };
 
-  /**
-   * Format quota information for display
-   */
-  const getQuotaMessage = () => {
-    if (!quotaInfo) return null;
+  const getFeatureMessage = () => {
+    if (message) return message;
 
-    if (quotaInfo.projects) {
-      const { used, limit } = quotaInfo.projects;
-      return `You have reached your project limit (${used}/${limit || 'unlimited'}).`;
-    }
+    const messages = {
+      projects: 'Has arribat al límit de projectes del teu pla.',
+      custom_uploads: 'Les pujades de PDF personalitzats estan disponibles en els plans Pro i Estudi.',
+      api_access: 'L\'accés a l\'API està disponible només en el pla Estudi.',
+      unlimited_projects: 'Els projectes il·limitats estan disponibles en els plans Pro i Estudi.',
+      document_comparison: 'La comparació de documents està disponible en els plans Pro i Estudi.'
+    };
 
-    return null;
+    return messages[feature] || 'Aquesta funcionalitat requereix un pla superior.';
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      ></div>
-
-      {/* Modal */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          
-          {/* Close Button */}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Actualitza el teu pla</h2>
+            <p className="text-sm text-gray-600 mt-1">{getFeatureMessage()}</p>
+          </div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
 
-          {/* Icon */}
-          <div className="flex justify-center mb-4">
-            <div className={`w-16 h-16 rounded-full bg-${config.color}-100 flex items-center justify-center`}>
-              <svg className={`w-8 h-8 text-${config.color}-600`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-              </svg>
-            </div>
+        {/* Current Tier Info */}
+        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Pla actual:</span>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              currentTier === 'free' ? 'bg-gray-100 text-gray-800' :
+              currentTier === 'basic' ? 'bg-blue-100 text-blue-800' :
+              currentTier === 'pro' ? 'bg-purple-100 text-purple-800' :
+              'bg-green-100 text-green-800'
+            }`}>
+              {tierFeatures[currentTier]?.name || 'Gratuït'}
+            </span>
           </div>
+        </div>
 
-          {/* Title */}
-          <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">
-            Upgrade Required
-          </h3>
+        {/* Pricing Cards */}
+        <div className="px-6 py-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            {Object.entries(tierFeatures).map(([tier, info]) => (
+              <div
+                key={tier}
+                className={`relative rounded-lg border-2 p-6 ${
+                  info.recommended 
+                    ? 'border-purple-500 shadow-lg' 
+                    : 'border-gray-200'
+                } ${
+                  currentTier === tier ? 'opacity-50' : ''
+                }`}
+              >
+                {info.recommended && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      Recomanat
+                    </span>
+                  </div>
+                )}
 
-          {/* Message */}
-          <p className="text-gray-600 text-center mb-4">
-            {quotaInfo ? (
-              <>
-                {getQuotaMessage()} Upgrade to <strong>{config.name}</strong> to unlock {feature}.
-              </>
-            ) : (
-              <>
-                <strong>{feature}</strong> requires a <strong>{config.name}</strong> subscription.
-              </>
-            )}
-          </p>
+                {currentTier === tier && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      Pla actual
+                    </span>
+                  </div>
+                )}
 
-          {/* Current Tier Badge */}
-          {currentTier && currentTier !== 'free' && (
-            <div className="bg-gray-100 rounded-lg p-3 mb-4 text-center">
-              <p className="text-sm text-gray-600">
-                Current plan: <span className="font-medium capitalize">{currentTier}</span>
-              </p>
-            </div>
-          )}
-
-          {/* Benefits List */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h4 className="font-semibold text-gray-900 mb-3">
-              With {config.name}, you'll get:
-            </h4>
-            <ul className="space-y-2">
-              {config.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start">
-                  <svg className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  <span className="text-sm text-gray-700">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Price */}
-          <div className="text-center mb-6">
-            <p className="text-3xl font-bold text-gray-900">{config.price}</p>
-            <p className="text-sm text-gray-500 mt-1">Cancel anytime</p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <button
-              onClick={handleUpgrade}
-              disabled={loading}
-              className={`w-full bg-${config.color}-600 hover:bg-${config.color}-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200 ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">{info.name}</h3>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-gray-900">{info.price.split('/')[0]}</span>
+                    <span className="text-gray-600">/mes</span>
+                  </div>
                 </div>
-              ) : (
-                `Upgrade to ${config.name}`
-              )}
-            </button>
-            
-            <button
-              onClick={onClose}
-              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition duration-200"
-            >
-              Maybe Later
-            </button>
-          </div>
 
-          {/* Security Notice */}
-          <p className="text-xs text-gray-500 text-center mt-4">
-            Secure payment via Stripe • Cancel anytime
+                <ul className="space-y-3 mb-6">
+                  {info.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-sm text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleUpgrade(tier)}
+                  disabled={currentTier === tier}
+                  className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                    currentTier === tier
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : info.recommended
+                      ? 'bg-purple-600 text-white hover:bg-purple-700'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {currentTier === tier ? 'Pla actual' : 'Seleccionar'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Pots cancel·lar en qualsevol moment. Sense compromisos.
           </p>
+          <button
+            onClick={onClose}
+            className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+          >
+            Tancar
+          </button>
         </div>
       </div>
     </div>
@@ -203,4 +204,3 @@ const UpgradeModal = ({
 };
 
 export default UpgradeModal;
-

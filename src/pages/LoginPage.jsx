@@ -340,13 +340,12 @@ const LoginPage = () => {
 
             {/* Forgot Password Link */}
             <div className="text-right">
-              <button
-                type="button"
-                onClick={() => alert('La funcionalitat de recuperació de contrasenya s\'implementarà aviat!')}
+              <Link
+                to="/forgot-password"
                 className="text-sm font-medium text-cte-primary hover:text-cte-primary-dark transition duration-200"
               >
                 Heu oblidat la contrasenya?
-              </button>
+              </Link>
             </div>
 
             {/* Login Button */}

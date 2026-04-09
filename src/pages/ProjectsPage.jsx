@@ -412,14 +412,34 @@ const ProjectsPage = () => {
   };
 
   /**
-   * Loading state display
+   * Loading state — skeleton grid matching card layout
    */
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cte-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading projects...</p>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+              <div className="h-9 w-36 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-3">
+                <div className="h-5 w-3/4 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse" />
+                <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+                <div className="pt-2 flex gap-2">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse" />
+                  <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
