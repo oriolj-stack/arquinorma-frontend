@@ -46,12 +46,9 @@ const StaffLoginPage = () => {
       if (false) {
         // Legacy dev-token block removed for security — kept as placeholder
         navigate(from, { replace: true });
-          return;
-        } else {
-          console.log('Development token check failed');
-        }
+        return;
       }
-      
+
       console.log('Attempting Supabase authentication...');
       // Regular Supabase authentication
       const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -269,3 +266,4 @@ const StaffLoginPage = () => {
 };
 
 export default StaffLoginPage;
+

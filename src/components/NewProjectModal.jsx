@@ -85,30 +85,25 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
   }, [isOpen, isCreating]);
 
   /**
-   * Load towns from the API
+   * Load towns from the API — only towns with real document chunks are shown.
    */
   const loadTowns = async () => {
     setLoadingTowns(true);
     try {
-      // Use backend API URL
       const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
-      const url = `${baseUrl}/api/towns`;
-      console.log('Loading towns from URL:', url);
-      console.log('env.api.baseUrl:', env.api.baseUrl);
-      
-      const response = await fetch(url);
+      const response = await fetch(`${baseUrl}/api/towns`);
       if (!response.ok) {
         throw new Error(`Failed to load towns: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-      
-      // Sort towns alphabetically by name
-      const sortedTowns = (data.towns || []).sort((a, b) => {
-        return a.name.localeCompare(b.name, 'ca', { numeric: true });
-      });
-      
-      setTowns(sortedTowns);
-      console.log(`Loaded ${sortedTowns.length} towns successfully`);
+
+      // Keep only towns that have at least one searchable document chunk
+      const available = (data.towns || [])
+        .filter(t => t.has_chunks === true)
+        .sort((a, b) => a.name.localeCompare(b.name, 'ca', { numeric: true }));
+
+      setTowns(available);
+      console.log(`Loaded ${available.length} towns with content (of ${(data.towns || []).length} total)`);
     } catch (error) {
       console.error('Error loading towns:', error);
       setTowns([]);
@@ -180,14 +175,9 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
       errors.number = 'El número és obligatori';
     }
     
-    // Town validation
+    // Town validation — only towns with chunks are shown, so any selected value is valid
     if (!formData.town) {
       errors.town = 'El municipi és obligatori';
-    } else {
-      const selectedTown = towns.find(t => t.name === formData.town);
-      if (selectedTown && selectedTown.is_available === false) {
-        errors.town = 'Aquest municipi encara no està disponible a ArquiNorma';
-      }
     }
     
     setFormErrors(errors);
@@ -401,7 +391,7 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
             )}
           </div>
 
-          {/* Town Selection */}
+          {/* Town Selection — only towns with indexed normative content */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Municipi *
@@ -417,32 +407,11 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
               <option value="">
                 {loadingTowns ? 'Carregant municipis...' : 'Seleccioneu el municipi'}
               </option>
-              {(() => {
-                const available = towns.filter(t => t.is_available !== false);
-                const pending = towns.filter(t => t.is_available === false);
-                return (
-                  <>
-                    {available.length > 0 && (
-                      <optgroup label="Municipis disponibles">
-                        {available.map((town) => (
-                          <option key={town.id || town.name} value={town.name}>
-                            {town.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {pending.length > 0 && (
-                      <optgroup label="Pendent d'incorporació">
-                        {pending.map((town) => (
-                          <option key={town.id || town.name} value={town.name} disabled style={{ color: '#9ca3af' }}>
-                            {town.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                  </>
-                );
-              })()}
+              {towns.map((town) => (
+                <option key={town.id || town.name} value={town.name}>
+                  {town.name}
+                </option>
+              ))}
             </select>
             {formErrors.town && (
               <p className="mt-1 text-sm text-red-600">{formErrors.town}</p>
@@ -450,6 +419,11 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
             {!loadingTowns && towns.length === 0 && (
               <p className="mt-1 text-sm text-gray-500">
                 No s'han pogut carregar els municipis. Intenteu-ho més tard.
+              </p>
+            )}
+            {!loadingTowns && towns.length > 0 && (
+              <p className="mt-1 text-xs text-gray-400">
+                {towns.length} municipis amb normativa urbanística indexada
               </p>
             )}
           </div>
