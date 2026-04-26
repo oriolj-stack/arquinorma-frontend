@@ -39,7 +39,10 @@ const ProjectsPage = () => {
   
 
   /**
-   * Load subscription quota information
+   * Load subscription quota information.
+   *
+   * Render free tier sleeps after ~15 min idle, so the first request after
+   * a cold-start can take 30–60 s. We use a long timeout and retry once.
    */
   const loadSubscriptionQuota = async () => {
     try {
@@ -48,14 +51,31 @@ const ProjectsPage = () => {
         return;
       }
 
-      // Ensure no double slashes
       const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
-      const response = await fetch(`${baseUrl}/api/subscriptions/quota`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
+      const fetchQuota = async (timeoutMs) => {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), timeoutMs);
+        try {
+          return await fetch(`${baseUrl}/api/subscriptions/quota`, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            signal: ctl.signal,
+            cache: 'no-store',
+          });
+        } finally {
+          clearTimeout(timer);
         }
-      });
+      };
+
+      let response;
+      try {
+        response = await fetchQuota(75000);
+      } catch (firstErr) {
+        console.warn('First quota fetch failed, retrying once:', firstErr?.message || firstErr);
+        response = await fetchQuota(75000);
+      }
 
       if (response.ok) {
         const data = await response.json();

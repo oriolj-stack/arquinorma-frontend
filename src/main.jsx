@@ -6,6 +6,26 @@ import '/src/index.css';
 import { stripePromise } from '/src/stripeClient.js';
 // Initialize i18n for internationalization support
 import '/src/i18n.js';
+import { env } from '/src/config/env.js';
+
+// ── Backend warm-up ping ──────────────────────────────────────────────────────
+// Render's free tier sleeps after ~15 min of idle. Cold-start is 30–60s.
+// We fire a no-cors ping to /health the moment the app loads so the backend
+// starts waking up while the user is still logging in / navigating.
+// This is fire-and-forget — failures are silent and never block the UI.
+if (typeof window !== 'undefined' && env?.api?.baseUrl) {
+  try {
+    fetch(`${env.api.baseUrl}/health`, {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_) {
+    // ignore
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Sentry error tracking ─────────────────────────────────────────────────────
 // Initialised only when VITE_SENTRY_DSN is set in the environment.

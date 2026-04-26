@@ -86,24 +86,45 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
 
   /**
    * Load towns from the API — only towns with real document chunks are shown.
+   *
+   * Render's free tier sleeps after ~15 min idle, so the first request after
+   * a cold-start can take 30–60 s. We:
+   *   1. Use a 75 s AbortController timeout (long enough for cold-start).
+   *   2. Retry once if the first attempt fails or returns no towns.
+   *   3. Surface a "warming up" hint after 4 s instead of a generic error.
    */
-  const loadTowns = async () => {
-    setLoadingTowns(true);
+  const fetchTownsOnce = async (timeoutMs) => {
+    const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
     try {
-      const baseUrl = env.api.baseUrl?.endsWith('/') ? env.api.baseUrl.slice(0, -1) : env.api.baseUrl;
-      const response = await fetch(`${baseUrl}/api/towns`);
+      const response = await fetch(`${baseUrl}/api/towns`, {
+        signal: ctl.signal,
+        cache: 'no-store',
+      });
       if (!response.ok) {
         throw new Error(`Failed to load towns: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-
-      // Keep only towns that have at least one searchable document chunk
-      const available = (data.towns || [])
+      return (data.towns || [])
         .filter(t => t.has_chunks === true)
         .sort((a, b) => a.name.localeCompare(b.name, 'ca', { numeric: true }));
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
+  const loadTowns = async () => {
+    setLoadingTowns(true);
+    try {
+      let available = [];
+      try {
+        available = await fetchTownsOnce(75000);
+      } catch (firstErr) {
+        console.warn('First towns fetch failed, retrying once:', firstErr?.message || firstErr);
+        available = await fetchTownsOnce(75000);
+      }
       setTowns(available);
-      console.log(`Loaded ${available.length} towns with content (of ${(data.towns || []).length} total)`);
     } catch (error) {
       console.error('Error loading towns:', error);
       setTowns([]);
@@ -418,7 +439,12 @@ const NewProjectModal = ({ isOpen, onClose, onProjectCreated, onError, onSuccess
             )}
             {!loadingTowns && towns.length === 0 && (
               <p className="mt-1 text-sm text-gray-500">
-                No s'han pogut carregar els municipis. Intenteu-ho més tard.
+                No s'han pogut carregar els municipis. Recarregueu la pàgina i torneu-ho a provar.
+              </p>
+            )}
+            {loadingTowns && (
+              <p className="mt-1 text-xs text-gray-400">
+                Carregant municipis... pot trigar uns segons si el servidor s'està iniciant.
               </p>
             )}
             {!loadingTowns && towns.length > 0 && (

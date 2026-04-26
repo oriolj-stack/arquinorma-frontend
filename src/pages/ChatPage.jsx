@@ -221,7 +221,10 @@ const ChatPage = () => {
   };
 
   /**
-   * Load CTE chat messages from database
+   * Load CTE chat messages from database.
+   *
+   * Render free tier sleeps after ~15 min idle (cold-start ≈ 30–60 s),
+   * so we use a long abort timeout and retry once before giving up.
    */
   const loadCTEMessages = async () => {
     try {
@@ -236,11 +239,27 @@ const ChatPage = () => {
       }
 
       const baseUrl = API_BASE_URL?.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-      const response = await fetch(`${baseUrl}/api/cte/messages`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
+      const fetchMessages = async (timeoutMs) => {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), timeoutMs);
+        try {
+          return await fetch(`${baseUrl}/api/cte/messages`, {
+            headers: { 'Authorization': `Bearer ${session.access_token}` },
+            signal: ctl.signal,
+            cache: 'no-store',
+          });
+        } finally {
+          clearTimeout(timer);
         }
-      });
+      };
+
+      let response;
+      try {
+        response = await fetchMessages(75000);
+      } catch (firstErr) {
+        console.warn('First CTE messages fetch failed, retrying once:', firstErr?.message || firstErr);
+        response = await fetchMessages(75000);
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
