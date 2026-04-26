@@ -172,7 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         // User exists - we need to find their ID
         // List users and find by email (unfortunately Supabase doesn't have getByEmail)
-        const { data: usersList, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
         
         if (listError) {
           console.error('Error listing users:', listError);
@@ -182,7 +182,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
         
-        const existingUser = usersList?.users?.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+        const users: Array<{ id: string; email?: string }> = listData?.users ?? [];
+        const existingUser = users.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
         if (existingUser) {
           user_id = existingUser.id;
           console.log('Found existing user ID:', user_id);
