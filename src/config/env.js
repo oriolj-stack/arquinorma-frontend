@@ -100,10 +100,19 @@ export const env = {
   },
   
   // Backend API Configuration
+  // In development, defaults to localhost:8000 (Vite proxy handles /api forwarding)
+  // In production, defaults to the Render-hosted backend if VITE_BACKEND_URL is missing
   api: {
-    // In production, VITE_BACKEND_URL must be set to the Cloudflare Tunnel URL
-    // In development, defaults to localhost:8000
-    baseUrl: getEnvVar('VITE_BACKEND_URL', import.meta.env.DEV ? 'http://localhost:8000' : '', false),
+    baseUrl: (() => {
+      const fromEnv = getEnvVar('VITE_BACKEND_URL', '', false);
+      if (fromEnv && fromEnv.trim() !== '') return fromEnv.trim().replace(/\/$/, '');
+      if (import.meta.env.DEV) return 'http://localhost:8000';
+      // Production fallback — guarantees the app never tries to call relative /api/* paths
+      // (which would hit Vercel rewrites and 404). Override via VITE_BACKEND_URL on Vercel.
+      const fallback = 'https://arquinorma-backend.onrender.com';
+      console.warn(`[env] VITE_BACKEND_URL not set — using fallback: ${fallback}`);
+      return fallback;
+    })(),
   },
   
   // Application Configuration
